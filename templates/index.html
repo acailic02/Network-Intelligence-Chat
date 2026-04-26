@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MAP</title>
+
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            background-color: dimgray;
+            min-height: 100vh;
+            margin: 0;
+        }
+ 
+        #mainChat {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            width: 50%;
+        }
+ 
+        #newMessage {
+            display: flex;
+            justify-content: center;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            padding-bottom: 0.5rem;
+            padding-top: 0.5rem;
+            width: 100%;
+            background-color: dimgray;
+        }
+ 
+        #userMSG {
+            border-radius: 5rem;
+            width: 50%;
+            height: 5vh;
+            padding: 0 1rem;
+            font-size: 1rem;
+            box-sizing: border-box;
+
+            background-color: #555;
+            border-style: outset;
+        }
+
+        #userMSG:focus{
+            outline: none;
+            border-style: inset;
+        }
+ 
+        #chatHistory {
+            display: flex;
+            justify-content: space-between;
+            flex: 1;
+            scroll-padding-bottom: 200px;
+            overflow-y: auto;
+
+            scrollbar-width: none;
+        }
+
+        #chatHistory::-webkit-scrollbar {
+            display: none;
+        }
+ 
+        #systemSide {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            width: 45%;
+            padding: 0.5rem;
+        }
+ 
+        #userSide {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            align-items: flex-end;
+            width: 45%;
+            padding: 0.5rem;
+        }
+ 
+        .system {
+            display: inline-block;
+            overflow-wrap: break-word;
+            max-width: 90%;
+            background-color: #555;
+            color: white;
+            padding: 0.4rem 0.8rem;
+            border-radius: 0.5rem;
+        }
+ 
+        .user {
+            display: inline-block;
+            overflow-wrap: break-word;
+            max-width: 90%;
+            background-color: #444;
+            color: white;
+            padding: 0.4rem 0.8rem;
+            border-radius: 0.5rem;
+        }
+
+    </style>
+
+</head>
+<body>
+    <div id="mainChat">
+        <div id="chatHistory">
+            <div id="systemSide"></div>
+            <div id="userSide"></div>
+            <div class="spacer"></div>
+        </div>      
+        <div id="newMessage">
+            <input type="text" id="userMSG" placeholder="Let's MAP it out...">
+        </div>
+    </div>
+
+
+    <script>
+        const input = document.getElementById("userMSG");
+        heightOffset = 0;
+      
+        async function sendMSG(msg){
+            const response = await fetch("/send", {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({message: msg})
+            })
+            return response
+        }
+
+        async function EnterClicked(event){
+            if (event.key === "Enter" && input.value != "") {
+                input.removeEventListener("keypress", EnterClicked); //turn off event listenter for AI to answer.
+                input.setAttribute("placeholder", "Wait for LLM response!")
+                input.setAttribute("disabled", true)
+
+                const msg = input.value
+                input.value = "";
+
+                AddMessageDiv(msg, "user")
+                const data = await (await sendMSG(msg)).json(); // [TODO]: wait for answer
+
+                AddMessageDiv(data.systemRes, "system")
+
+                input.addEventListener("keypress", EnterClicked);
+                input.setAttribute("placeholder", "Want to MAP something else?")
+                input.removeAttribute("disabled")
+            }
+        }
+
+        function AddMessageDiv(string, side){
+            const parent = document.getElementById(side+"Side");
+            const newMessage = document.createElement('div');
+
+            const oldSpacer = parent.querySelector(".spacer"); //only for spacing
+            if (oldSpacer) oldSpacer.remove(); //only for spacing
+
+            newMessage.innerHTML = string;
+            newMessage.setAttribute("class", side);
+
+            const height = heightOffset + newMessage.offsetHeight + 10;
+
+            parent.appendChild(newMessage);
+
+            newOffset = newMessage.offsetHeight;
+            newMessage.style.marginTop = height + "px";
+            heightOffset = newOffset;
+
+            const spacer = document.createElement('div'); //only for spacing
+            spacer.setAttribute("class", "spacer"); //
+            spacer.style.minHeight = "10vh"; //
+            parent.appendChild(spacer); //only for spacing
+
+            const history = document.getElementById("chatHistory");
+            history.scrollTop += height;
+        }
+
+        input.addEventListener("keypress", EnterClicked);
+        
+      </script>
+</body>
+</html>
