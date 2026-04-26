@@ -1,6 +1,8 @@
 #Separate enriched connections files
 EnrichedConnectionFiles/
 
+.idea/
+
 # Environment
 .env
 .env.*

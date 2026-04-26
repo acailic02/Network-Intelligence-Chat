@@ -1,4 +1,5 @@
 from flask import Flask, request, jsonify, render_template
+from src.llm.client import chat
 
 import time
 
@@ -16,7 +17,10 @@ def systemRes():
     seconds = 2
     time.sleep(seconds)
 
-    res = f"Moj odgovor na tvoju poruku: {userMSG}!" #Here we call LLM
+    res = chat(
+        messages=[{"role": "user", "content": userMSG}],
+        system="Ti si asistent koji pomaže korisnicima da pretražuju svoju LinkedIn mrežu."
+    )["text"] #Here we call LLM
 
     return jsonify({"systemRes": res})
 
