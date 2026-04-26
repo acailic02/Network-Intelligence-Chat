@@ -3,6 +3,7 @@ EnrichedConnectionFiles/
 
 .idea/
 
+
 # Environment
 .env
 .env.*
