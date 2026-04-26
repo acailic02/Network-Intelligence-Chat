@@ -1,0 +1,53 @@
+#Initial separated enriched connections files
+EnrichedConnectionFiles/
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# Raw data - never commit
+*.csv
+data/cache/
+*.db
+*.sqlite
+
+# Original enriched JSONs (pre-snapshot)
+data/raw/
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.Python
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Virtual environment
+.venv/
+venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs (runtime, ne commitujemo)
+logs/
+
+# Pytest / coverage
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Jupyter
+.ipynb_checkpoints/
+notebooks/.ipynb_checkpoints/
