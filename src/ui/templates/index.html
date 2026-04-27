@@ -1,188 +1,528 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MAP</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MAP</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.6/marked.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-    <style>
-        body {
-            display: flex;
-            justify-content: center;
-            background-color: dimgray;
-            min-height: 100vh;
-            margin: 0;
-        }
- 
-        #mainChat {
-            display: flex;
-            flex-direction: column;
-            height: 100vh;
-            width: 50%;
-        }
- 
-        #newMessage {
-            display: flex;
-            justify-content: center;
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            padding-bottom: 0.5rem;
-            padding-top: 0.5rem;
-            width: 100%;
-            background-color: dimgray;
-        }
- 
-        #userMSG {
-            border-radius: 5rem;
-            width: 50%;
-            height: 5vh;
-            padding: 0 1rem;
-            font-size: 1rem;
-            box-sizing: border-box;
+    :root {
+      --bg:          #0a0a0b;
+      --surface:     #18181b;
+      --surface2:    #222226;
+      --surface3:    #2a2a2f;
+      --border:      rgba(255,255,255,0.06);
+      --border2:     rgba(255,255,255,0.1);
+      --text:        #f0f0f2;
+      --text2:       #a0a0aa;
+      --text3:       #606068;
+      --accent:      #e8334a;
+      --accent2:     #3a6ff7;
+      --accent-glow: rgba(232,51,74,0.15);
+      --accent-soft: rgba(232,51,74,0.08);
+      --green:       #4ade80;
+      --font:        'Sora', sans-serif;
+      --mono:        'JetBrains Mono', monospace;
+    }
 
-            background-color: #555;
-            border-style: outset;
-        }
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      font-family: var(--font);
+      color: var(--text);
+      -webkit-font-smoothing: antialiased;
+      overflow: hidden;
+    }
 
-        #userMSG:focus{
-            outline: none;
-            border-style: inset;
-        }
- 
-        #chatHistory {
-            display: flex;
-            justify-content: space-between;
-            flex: 1;
-            scroll-padding-bottom: 200px;
-            overflow-y: auto;
+    /* ── Full-screen chat shell ── */
+    .app {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      max-width: 800px;
+      margin: 0 auto;
+    }
 
-            scrollbar-width: none;
-        }
+    /* ── Top bar ── */
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 14px 24px;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+      gap: 10px;
+    }
 
-        #chatHistory::-webkit-scrollbar {
-            display: none;
-        }
- 
-        #systemSide {
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-            width: 45%;
-            padding: 0.5rem;
-        }
- 
-        #userSide {
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-            align-items: flex-end;
-            width: 45%;
-            padding: 0.5rem;
-        }
- 
-        .system {
-            display: inline-block;
-            overflow-wrap: break-word;
-            max-width: 90%;
-            background-color: #555;
-            color: white;
-            padding: 0.4rem 0.8rem;
-            border-radius: 0.5rem;
-        }
- 
-        .user {
-            display: inline-block;
-            overflow-wrap: break-word;
-            max-width: 90%;
-            background-color: #444;
-            color: white;
-            padding: 0.4rem 0.8rem;
-            border-radius: 0.5rem;
-        }
+    .logo-mark {
+      width: 28px; height: 28px;
+      background: linear-gradient(135deg, #e8334a, #3a6ff7);
+      border-radius: 7px;
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--mono);
+      font-size: 11px; font-weight: 500;
+      color: #fff;
+    }
 
-    </style>
+    .model-dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--green); box-shadow: 0 0 5px var(--green);
+    }
 
+    /* ── Messages area ── */
+    .messages-wrap {
+      flex: 1;
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: var(--surface3) transparent;
+    }
+    .messages-wrap::-webkit-scrollbar { width: 5px; }
+    .messages-wrap::-webkit-scrollbar-thumb { background: var(--surface3); border-radius: 3px; }
+
+    /* ── Empty / welcome state ── */
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      gap: 14px;
+      padding: 40px 24px;
+      text-align: center;
+    }
+
+    .empty-logo {
+      width: 52px; height: 52px;
+      background: var(--accent-soft);
+      border: 1px solid rgba(124,106,247,0.25);
+      border-radius: 14px;
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--mono); font-size: 17px; font-weight: 500;
+      color: var(--accent);
+      margin-bottom: 4px;
+    }
+
+    .empty-title {
+      font-size: 22px; font-weight: 600;
+      color: var(--text); letter-spacing: -0.4px;
+    }
+
+    .empty-sub {
+      font-size: 14px; color: var(--text2);
+      line-height: 1.65; max-width: 340px;
+    }
+
+    .suggestions {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 8px; width: 100%; max-width: 460px;
+      margin-top: 6px;
+    }
+
+    .suggestion {
+      padding: 11px 14px; border-radius: 10px;
+      border: 1px solid var(--border2); background: var(--surface);
+      font-size: 12.5px; color: var(--text2);
+      cursor: pointer; transition: all 0.15s;
+      text-align: left; line-height: 1.45;
+      font-family: var(--font);
+    }
+    .suggestion:hover {
+      border-color: var(--accent);
+      color: var(--text);
+      background: var(--accent-soft);
+    }
+
+    /* ── Messages list ── */
+    .messages {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 32px 24px 16px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .msg-row {
+      display: flex;
+      gap: 14px;
+      padding: 18px 0;
+      border-bottom: 1px solid var(--border);
+      animation: fadeIn 0.18s ease both;
+    }
+    .msg-row:last-child { border-bottom: none; }
+    @keyframes fadeIn { from { opacity:0; transform:translateY(5px); } to { opacity:1; transform:translateY(0); } }
+
+    .msg-avatar {
+      width: 30px; height: 30px; border-radius: 7px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px; font-weight: 600;
+      flex-shrink: 0; margin-top: 2px;
+    }
+    .msg-avatar.ai   { background: linear-gradient(135deg, #e8334a, #3a6ff7); color: #fff; font-family: var(--mono); }
+    .msg-avatar.user { background: var(--surface3); color: var(--text2); font-family: var(--font); font-size: 12px; }
+
+    .msg-content { flex: 1; min-width: 0; }
+    .msg-name { font-size: 12.5px; font-weight: 600; color: var(--text); margin-bottom: 5px; }
+    .msg-text { font-size: 14.5px; line-height: 1.75; color: var(--text); white-space: pre-wrap; word-break: break-word; }
+
+    /* Markdown rendered content */
+    .msg-text.md { white-space: normal; }
+    .msg-text.md p { margin-bottom: 10px; }
+    .msg-text.md p:last-child { margin-bottom: 0; }
+    .msg-text.md strong { font-weight: 600; color: var(--text); }
+    .msg-text.md em { font-style: italic; }
+    .msg-text.md h1, .msg-text.md h2, .msg-text.md h3 {
+      font-weight: 600; color: var(--text);
+      margin: 14px 0 6px; line-height: 1.3;
+    }
+    .msg-text.md h1 { font-size: 18px; }
+    .msg-text.md h2 { font-size: 16px; }
+    .msg-text.md h3 { font-size: 15px; }
+    .msg-text.md ul, .msg-text.md ol {
+      padding-left: 20px; margin-bottom: 10px;
+    }
+    .msg-text.md li { margin-bottom: 4px; }
+    .msg-text.md code {
+      font-family: var(--mono); font-size: 13px;
+      background: var(--surface3); color: #e0c0ff;
+      padding: 2px 6px; border-radius: 4px;
+    }
+    .msg-text.md pre {
+      background: var(--surface3); border-radius: 8px;
+      padding: 12px 14px; margin: 10px 0; overflow-x: auto;
+    }
+    .msg-text.md pre code {
+      background: none; padding: 0; color: var(--text2);
+    }
+    .msg-text.md a { color: var(--accent); text-decoration: none; }
+    .msg-text.md a:hover { text-decoration: underline; }
+    .msg-text.md blockquote {
+      border-left: 3px solid var(--accent);
+      padding-left: 12px; color: var(--text2);
+      margin: 8px 0;
+    }
+    .msg-text.md hr { border: none; border-top: 1px solid var(--border2); margin: 12px 0; }
+
+    /* Streaming cursor */
+    .cursor {
+      display: inline-block; width: 2px; height: 15px;
+      background: var(--accent); border-radius: 1px;
+      margin-left: 1px; vertical-align: middle;
+      animation: blink 0.55s steps(1) infinite;
+    }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+
+    /* Profile pills */
+    .profiles-wrap { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+    .profile-pill {
+      display: flex; align-items: center; gap: 5px;
+      padding: 4px 11px; border-radius: 999px;
+      border: 1px solid var(--border2); background: var(--surface2);
+      font-size: 12px; color: var(--text2);
+      animation: fadeUp 0.2s ease both;
+    }
+    .profile-pill::before {
+      content: ''; width: 5px; height: 5px;
+      border-radius: 50%; background: var(--accent); flex-shrink: 0;
+    }
+    @keyframes fadeUp { from { opacity:0; transform:translateY(4px); } to { opacity:1; transform:translateY(0); } }
+
+    /* Typing dots */
+    .typing-dots { display: flex; gap: 4px; align-items: center; padding: 3px 0; }
+    .typing-dots span {
+      width: 5px; height: 5px; border-radius: 50%;
+      background: var(--text3); animation: td 1.1s infinite ease-in-out;
+    }
+    .typing-dots span:nth-child(2) { animation-delay: 0.18s; }
+    .typing-dots span:nth-child(3) { animation-delay: 0.36s; }
+    @keyframes td { 0%,60%,100%{transform:scale(1);opacity:0.35} 30%{transform:scale(1.4);opacity:1} }
+
+    /* ── Input area ── */
+    .input-shell {
+      padding: 12px 24px 20px;
+      flex-shrink: 0;
+      border-top: 1px solid var(--border);
+    }
+
+    .input-box {
+      position: relative;
+      background: var(--surface);
+      border: 1px solid var(--border2);
+      border-radius: 14px;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .input-box:focus-within {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-glow);
+    }
+
+    textarea {
+      display: block; width: 100%;
+      background: transparent; border: none; outline: none; resize: none;
+      padding: 15px 52px 15px 18px;
+      font-family: var(--font); font-size: 14px;
+      color: var(--text); line-height: 1.6;
+      min-height: 52px; max-height: 200px;
+      overflow-y: auto; scrollbar-width: none;
+    }
+    textarea::placeholder { color: var(--text3); }
+    textarea::-webkit-scrollbar { display: none; }
+
+    .send-btn {
+      position: absolute; right: 9px; bottom: 9px;
+      width: 34px; height: 34px; border-radius: 9px;
+      border: none; background: linear-gradient(135deg, #e8334a, #3a6ff7); color: #fff;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      transition: background 0.15s, transform 0.1s, opacity 0.15s;
+    }
+    .send-btn:hover:not(:disabled) { background: linear-gradient(135deg, #3a6ff7, #e8334a); }
+    .send-btn:active:not(:disabled) { transform: scale(0.93); }
+    .send-btn:disabled { opacity: 0.25; cursor: default; }
+
+    /* Waiting / streaming state */
+    .input-box.waiting {
+      border-radius: 14px;
+      animation: pulse-border 1.8s ease-in-out infinite;
+    }
+    @keyframes pulse-border {
+      0%, 100% { box-shadow: 0 0 0 2px rgba(232,51,74,0.08); }
+      50%       { box-shadow: 0 0 0 3px rgba(232,51,74,0.3); }
+    }
+    .send-btn.stop { background: var(--surface3) !important; opacity: 1 !important; cursor: pointer !important; }
+    .send-btn.stop:hover { background: #3a3a40 !important; }
+
+    .input-hint { margin-top: 9px; text-align: center; font-size: 11px; color: var(--text3); transition: color 0.2s; }
+    .input-hint.waiting { color: var(--accent); }
+  </style>
 </head>
 <body>
-    <div id="mainChat">
-        <div id="chatHistory">
-            <div id="systemSide"></div>
-            <div id="userSide"></div>
-            <div class="spacer"></div>
-        </div>      
-        <div id="newMessage">
-            <input type="text" id="userMSG" placeholder="Let's MAP it out...">
-        </div>
+<div class="app">
+
+  <!-- Top bar -->
+  <div class="topbar">
+    <div class="logo-mark">M</div>
+  </div>
+
+  <!-- Messages / welcome -->
+  <div class="messages-wrap" id="messagesWrap">
+
+    <!-- Welcome screen -->
+    <div class="empty-state" id="emptyState">
+      <div class="empty-logo">M</div>
+      <div class="empty-title">How can I help you today?</div>
+      <div class="empty-sub">Ask me anything about your LinkedIn network, contacts, or connections.</div>
+      <div class="suggestions">
+        <button class="suggestion" onclick="fillSuggestion('Find my connections in Serbia')">Find my connections in Serbia</button>
+        <button class="suggestion" onclick="fillSuggestion('Who works at Google in my network?')">Who works at Google in my network?</button>
+        <button class="suggestion" onclick="fillSuggestion('Show connections from Belgrade')">Show connections from Belgrade</button>
+        <button class="suggestion" onclick="fillSuggestion('List my most recent connections')">List my most recent connections</button>
+      </div>
     </div>
 
+    <!-- Chat messages -->
+    <div class="messages" id="messages"></div>
 
-    <script>
-        const input = document.getElementById("userMSG");
-        heightOffset = 0;
-      
-        async function sendMSG(msg){
-            const response = await fetch("/send", {
-                method: "POST",
-                headers: {"Content-Type": "application/json"},
-                body: JSON.stringify({message: msg})
-            })
-            return response
-        }
+  </div>
 
-        async function EnterClicked(event){
-            if (event.key === "Enter" && input.value != "") {
-                input.removeEventListener("keypress", EnterClicked); //turn off event listenter for AI to answer.
-                input.setAttribute("placeholder", "Wait for LLM response!")
-                input.setAttribute("disabled", true)
+  <!-- Input -->
+  <div class="input-shell">
+    <div class="input-box">
+      <textarea id="userInput" placeholder="Message MAP…" rows="1"></textarea>
+      <button class="send-btn" id="sendBtn" disabled>
+        <!-- Arrow up (default) -->
+        <svg id="iconSend" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/>
+        </svg>
+        <!-- Stop square (while waiting) -->
+        <svg id="iconStop" width="12" height="12" viewBox="0 0 24 24" fill="currentColor" style="display:none">
+          <rect x="4" y="4" width="16" height="16" rx="2"/>
+        </svg>
+      </button>
+    </div>
+    <div class="input-hint" id="inputHint">Enter to send · Shift+Enter for new line</div>
+  </div>
 
-                const msg = input.value
-                input.value = "";
+</div>
 
-                AddMessageDiv(msg, "user")
-                const data = await (await sendMSG(msg)).json(); // [TODO]: wait for answer
+<script>
+  const messagesEl   = document.getElementById('messages');
+  const messagesWrap = document.getElementById('messagesWrap');
+  const inputEl      = document.getElementById('userInput');
+  const sendBtn      = document.getElementById('sendBtn');
+  const emptyState   = document.getElementById('emptyState');
+  const inputBox     = document.querySelector('.input-box');
+  const inputHint    = document.getElementById('inputHint');
+  const iconSend     = document.getElementById('iconSend');
+  const iconStop     = document.getElementById('iconStop');
 
-                AddMessageDiv(data.systemRes, "system")
-                if (data.profiles){
-                    AddMessageDiv(data.profiles.join("\n"), "system");
-                }
+  let isWaiting = false;
+  let activeReader = null; // so we can cancel mid-stream
 
-                input.addEventListener("keypress", EnterClicked);
-                input.setAttribute("placeholder", "Want to MAP something else?")
-                input.removeAttribute("disabled")
-            }
-        }
+  function setWaiting(on) {
+    isWaiting = on;
+    inputBox.classList.toggle('waiting', on);
+    inputHint.classList.toggle('waiting', on);
+    inputEl.placeholder = on ? 'Generating…' : 'Message MAP…';
+    sendBtn.disabled = false; // always enabled while waiting (acts as stop)
+    sendBtn.classList.toggle('stop', on);
+    iconSend.style.display = on ? 'none' : '';
+    iconStop.style.display = on ? '' : 'none';
+  }
 
-        function AddMessageDiv(string, side){
-            const parent = document.getElementById(side+"Side");
-            const newMessage = document.createElement('div');
+  function scrollToBottom() {
+    messagesWrap.scrollTo({ top: messagesWrap.scrollHeight, behavior: 'smooth' });
+  }
 
-            const oldSpacer = parent.querySelector(".spacer"); //only for spacing
-            if (oldSpacer) oldSpacer.remove(); //only for spacing
+  function autoScroll() {
+    const { scrollTop, scrollHeight, clientHeight } = messagesWrap;
+    if (scrollHeight - scrollTop - clientHeight < 200) {
+      messagesWrap.scrollTop = messagesWrap.scrollHeight;
+    }
+  }
 
-            newMessage.innerHTML = string;
-            newMessage.setAttribute("class", side);
+  function fillSuggestion(text) {
+    inputEl.value = text;
+    autoResize();
+    sendBtn.disabled = false;
+    inputEl.focus();
+  }
 
-            const height = heightOffset + newMessage.offsetHeight + 10;
+  function showMessages() {
+    emptyState.style.display = 'none';
+  }
 
-            parent.appendChild(newMessage);
+  function escHtml(s) {
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
 
-            newOffset = newMessage.offsetHeight;
-            newMessage.style.marginTop = height + "px";
-            heightOffset = newOffset;
+  function addUserRow(text) {
+    const row = document.createElement('div');
+    row.className = 'msg-row user';
+    row.innerHTML = `
+      <div class="msg-avatar user">P</div>
+      <div class="msg-content">
+        <div class="msg-name">You</div>
+        <div class="msg-text">${escHtml(text)}</div>
+      </div>`;
+    messagesEl.appendChild(row);
+    scrollToBottom();
+  }
 
-            const spacer = document.createElement('div'); //only for spacing
-            spacer.setAttribute("class", "spacer"); //
-            spacer.style.minHeight = "10vh"; //
-            parent.appendChild(spacer); //only for spacing
+  function addTypingRow() {
+    const row = document.createElement('div');
+    row.className = 'msg-row ai';
+    row.id = 'typing-row';
+    row.innerHTML = `
+      <div class="msg-avatar ai">M</div>
+      <div class="msg-content">
+        <div class="msg-name">MAP</div>
+        <div class="typing-dots"><span></span><span></span><span></span></div>
+      </div>`;
+    messagesEl.appendChild(row);
+    autoScroll();
+  }
 
-            const history = document.getElementById("chatHistory");
-            history.scrollTop += height;
-        }
+  function removeTyping() {
+    document.getElementById('typing-row')?.remove();
+  }
 
-        input.addEventListener("keypress", EnterClicked);
-        
-      </script>
+  function addAiRow() {
+    const row = document.createElement('div');
+    row.className = 'msg-row ai';
+    row.innerHTML = `
+      <div class="msg-avatar ai">M</div>
+      <div class="msg-content">
+        <div class="msg-name">MAP</div>
+        <div class="msg-text" id="stream-target"></div>
+      </div>`;
+    messagesEl.appendChild(row);
+    return row;
+  }
+
+  function addProfiles(profiles, contentEl) {
+    if (!profiles?.length) return;
+    const wrap = document.createElement('div');
+    wrap.className = 'profiles-wrap';
+    profiles.forEach((name, i) => {
+      const pill = document.createElement('div');
+      pill.className = 'profile-pill';
+      pill.style.animationDelay = (i * 35) + 'ms';
+      pill.textContent = name;
+      wrap.appendChild(pill);
+    });
+    contentEl.appendChild(wrap);
+  }
+
+  async function send() {
+    // If waiting, clicking send = stop (just re-enable UI, can't cancel non-streaming)
+    if (isWaiting) {
+      setWaiting(false);
+      sendBtn.disabled = inputEl.value.trim() === '';
+      return;
+    }
+
+    const msg = inputEl.value.trim();
+    if (!msg) return;
+
+    inputEl.value = '';
+    autoResize();
+    setWaiting(true);
+    showMessages();
+    addUserRow(msg);
+    addTypingRow();
+
+    try {
+      const res = await fetch('/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: msg })
+      });
+
+      if (!res.ok) throw new Error('Server error ' + res.status);
+
+      const data = await res.json();
+      removeTyping();
+
+      const aiRow     = addAiRow();
+      const textEl    = aiRow.querySelector('#stream-target');
+      const contentEl = aiRow.querySelector('.msg-content');
+      textEl.removeAttribute('id');
+      textEl.classList.add('md');
+      textEl.innerHTML = marked.parse(data.systemRes || '');
+
+      if (data.profiles) addProfiles(data.profiles, contentEl);
+
+    } catch (e) {
+      removeTyping();
+      const aiRow = addAiRow();
+      aiRow.querySelector('#stream-target').textContent = 'Something went wrong. Please try again.';
+    }
+
+    activeReader = null;
+    setWaiting(false);
+    sendBtn.disabled = inputEl.value.trim() === '';
+    inputEl.focus();
+    scrollToBottom();
+  }
+
+  function autoResize() {
+    inputEl.style.height = 'auto';
+    inputEl.style.height = Math.min(inputEl.scrollHeight, 200) + 'px';
+  }
+
+  inputEl.addEventListener('input', () => {
+    autoResize();
+    if (!isWaiting) sendBtn.disabled = inputEl.value.trim() === '';
+  });
+
+  inputEl.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); }
+  });
+
+  sendBtn.addEventListener('click', send);
+</script>
 </body>
 </html>
