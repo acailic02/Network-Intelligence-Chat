@@ -7,7 +7,6 @@ import json
 engine = create_engine(DATABASE_URL, echo=True)
 
 def init_db():
-    Base.metadata.drop_all(engine)
     Base.metadata.create_all(engine)
 
 
