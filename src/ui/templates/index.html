@@ -144,6 +144,9 @@
                 const data = await (await sendMSG(msg)).json(); // [TODO]: wait for answer
 
                 AddMessageDiv(data.systemRes, "system")
+                if (data.profiles){
+                    AddMessageDiv(data.profiles.join("\n"), "system");
+                }
 
                 input.addEventListener("keypress", EnterClicked);
                 input.setAttribute("placeholder", "Want to MAP something else?")

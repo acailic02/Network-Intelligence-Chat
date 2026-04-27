@@ -1,7 +1,9 @@
 from flask import Flask, request, jsonify, render_template
+from sqlalchemy.orm import Session
 from src.llm.client import chat
-
 import time
+from src.storage.db import engine
+from src.storage.repo import get_connections
 
 app = Flask(__name__)
 
@@ -22,7 +24,13 @@ def systemRes():
         system="Ti si asistent koji pomaže korisnicima da pretražuju svoju LinkedIn mrežu."
     )["text"] #Here we call LLM
 
-    return jsonify({"systemRes": res})
+    with Session(engine) as session:
+        query_res = get_connections(session, country=userMSG)
+
+    return jsonify({
+        "systemRes": res,
+        "profiles": [x.first_name + " " + x.last_name for x in query_res]
+    })
 
 if __name__ == "__main__":
     app.run(debug=True)
