@@ -1,9 +1,13 @@
 import chromadb
 from sentence_transformers import SentenceTransformer
-
+import os
 
 def semantic_query(query_text: str, top_k: int = 10) -> list[dict]:
-    client = chromadb.PersistentClient(path="../../data/vectors")
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    db_path = os.path.join(base_dir, "..", "..", "data", "vectors")
+
+    client = chromadb.PersistentClient(path=db_path)
+
     model = SentenceTransformer('BAAI/bge-m3')
     collection = client.get_collection("embeddings")
 

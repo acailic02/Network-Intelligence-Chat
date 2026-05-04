@@ -53,6 +53,10 @@ def retrieve(specification: UserQuery) -> list[dict]:
         rt = "structured_filter"
     else:
         rt = "semantic_search"
+
+    if rt == "semantic_search" and not specification.contextual_need: #guard
+        rt = "structured_filter"
+
     spec = {
         "retrieval_type": rt,
         "filters": filters,
