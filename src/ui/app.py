@@ -1,5 +1,7 @@
 from flask import Flask, request, jsonify, render_template
 from sqlalchemy.orm import Session
+
+from src.agents.workflow import build_network_intelligence_workflow
 from src.llm.client import chat
 from src.storage.db import engine
 from src.agents.query_understanding import understand
@@ -25,10 +27,11 @@ def systemRes():
 
     #profiles = [x.first_name + " " + x.last_name for x in query_res]
 
-    parsed = understand(userMSG)
+    workflow = build_network_intelligence_workflow()
+    result = workflow.invoke({"user_input": userMSG})
 
     return jsonify({
-        "systemRes": parsed.model_dump_json(),
+        "systemRes": result["answer"],
         #"profiles": profiles
     })
 

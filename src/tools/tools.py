@@ -43,8 +43,7 @@ def structured_filter(
         )
         return [
             {
-                "first_name": r.first_name,
-                "last_name": r.last_name,
+                "name": f"{r.first_name} {r.last_name}",
                 "owners": r.owners,
             }
             for r in results
@@ -62,11 +61,10 @@ def semantic_search(query: str, top_k: int = 10) -> list[dict]:
 
     return [
         {
-            "first_name": metadata["first_name"],
-            "last_name": metadata["last_name"],
+            "name": f"{metadata['first_name']} {metadata['last_name']}",
             "owners": metadata["owners"],
         }
-        for metadata in result.metadatas
+        for metadata in result["metadatas"]
     ]
 
 
