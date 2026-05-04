@@ -12,6 +12,6 @@ def semantic_query(query_text: str, top_k: int = 10) -> list[dict]:
     collection = client.get_collection("embeddings")
 
     query_embedding = model.encode([query_text]).tolist()
-    results = collection.query(query_embeddings=query_embedding, n_results=top_k)
+    results = collection.query(query_embeddings=query_embedding)
 
     return results

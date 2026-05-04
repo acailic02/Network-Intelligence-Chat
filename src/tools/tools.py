@@ -19,7 +19,7 @@ def structured_filter(
     skills: list[str] = None,
     owners_any: list[str] = None,
     owners_all: list[str] = None,
-    limit: int = 10,
+    limit: int = None,
 ) -> list[dict]:
     """
     Filter LinkedIn connections using structured SQL queries.
@@ -64,7 +64,7 @@ def semantic_search(query: str, top_k: int = 10) -> list[dict]:
             "name": f"{metadata['first_name']} {metadata['last_name']}",
             "owners": metadata["owners"],
         }
-        for metadata in result["metadatas"]
+        for metadata in result["metadatas"][0]
     ]
 
 
