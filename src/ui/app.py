@@ -2,7 +2,6 @@ from flask import Flask, request, jsonify, render_template
 from sqlalchemy.orm import Session
 from src.llm.client import chat
 from src.storage.db import engine
-from src.storage.repo import get_connections
 from src.agents.query_understanding import understand
 
 app = Flask(__name__)
