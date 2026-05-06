@@ -25,6 +25,9 @@ def build_embeddings():
             metadatas.append({
                 "first_name": connection["source_row"]["first_name"],
                 "last_name": connection["source_row"]["last_name"],
+                "headline": headline,
+                "summary": summary,
+                "linkedin_url": connection["source_row"]["url"],
                 "owners": ", ".join(connection["owners"])
             })
 
