@@ -173,7 +173,7 @@ def hybrid_search(filters: dict, query_text: str, top_k: int = 50) -> list[Prof]
     return results
 
 @tool
-def count_matches(results: list) -> int:
+def count_matches(results: list[dict]) -> int:
     """Count how many profiles were retrieved."""
     return len(results)
 

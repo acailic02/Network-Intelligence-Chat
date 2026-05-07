@@ -20,7 +20,7 @@ def build_network_intelligence_workflow():
         return {"query_understanding_state": output}
 
     def retrieval_strategy_node(state: WorkflowState) -> dict:
-        output = retrieve(state["query_understanding_state"])
+        output = retrieve(state["query_understanding_state"], state["user_input"])
         return {"results": output}
 
     def synthesis_node(state: WorkflowState) -> dict:
