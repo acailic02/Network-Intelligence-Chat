@@ -44,11 +44,22 @@ graph.add_edge("structured_retrieval", END)
 retrieval_strategy = graph.compile()
 
 def retrieve(specification: UserQuery) -> list[dict]:
+    position = specification.lookup_filters.position
+    connection = specification.lookup_filters.connection
+    education = specification.lookup_filters.education
+    #TODO:insert filters for all possible parameters for get_connections() (leave untill query_understanding.py adopts changes)
     filters = {
-        "company": specification.lookup_filters.company,
-        "country": specification.lookup_filters.location,
-        "owners_all": specification.lookup_filters.network_connection,
+        "current_company_name": position.company_name[0] if position is not None and position.company_name is not None else None,
+        "company_location": position.company_location if position is not None else None,
+        "current_job_title": position.title[0] if position is not None and position.title is not None else None,
+        "country": connection.country[0] if connection is not None and connection.country is not None else None,
+        "city": connection.city[0] if connection is not None and connection.city is not None else None,
+        "skills": connection.skills if connection is not None else None,
+        "degree": education.degree if education is not None else None,
+        "school_name": education.school_name if education is not None else None,
+        "owners_all": specification.lookup_filters.owner,
     }
+    print(filters)
     if specification.query_type.value == "LOOKUP":
         rt = "structured_filter"
     else:
