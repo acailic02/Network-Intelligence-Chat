@@ -4,7 +4,8 @@ from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
 from pydantic import BaseModel, Field
 
 from src.agents.query_understanding import UserQuery, LookupAttributes, QueryType
-from src.tools.tools import structured_filter, semantic_search, count_matches
+from src.tools.tools import structured_filter, semantic_search, count_matches, hybrid_search
+
 
 class RetrievalState(TypedDict):
     retrieval_type: Literal["structured_filter", "semantic_search"]
@@ -31,15 +32,25 @@ def semantic_retrieval(state: RetrievalState) -> dict:
     results = semantic_search.invoke(state["query_text"])
     return {"results": results}
 
+def hybrid_retrieval(state: RetrievalState) -> dict:
+    kwargs = {
+        "filters": state["filters"],
+        "query_text": state["query_text"]
+    }
+    results = hybrid_search.invoke(kwargs)
+    return {"results": results}
+
 graph = StateGraph(RetrievalState)
 graph.add_node("router", router)
 graph.add_node("structured_retrieval", structured_retrieval)
 graph.add_node("semantic_retrieval", semantic_retrieval)
+graph.add_node("hybrid_retrieval", hybrid_retrieval)
 
 graph.add_edge(START, "router")
-graph.add_conditional_edges("router", decide_search_type, {"structured_filter": "structured_retrieval", "semantic_search": "semantic_retrieval"})
+graph.add_conditional_edges("router", decide_search_type, {"structured_filter": "structured_retrieval", "semantic_search": "semantic_retrieval", "hybrid_search": "hybrid_retrieval"})
 graph.add_edge("semantic_retrieval", END)
 graph.add_edge("structured_retrieval", END)
+graph.add_edge("hybrid_retrieval", END)
 
 retrieval_strategy = graph.compile()
 
@@ -60,12 +71,15 @@ def retrieve(specification: UserQuery) -> list[dict]:
         "owners_all": specification.lookup_filters.owner,
     }
     print(filters)
-    if specification.query_type.value == "LOOKUP":
+    query_type = specification.query_type.value
+    if query_type == "LOOKUP":
         rt = "structured_filter"
-    else:
+    elif query_type == "DISCOVERY":
         rt = "semantic_search"
+    else:
+        rt = "hybrid_search"
 
-    if rt == "semantic_search" and not specification.contextual_need: #guard
+    if rt in ["semantic_search, hybrid_search"] and not specification.contextual_need: #guard
         rt = "structured_filter"
 
     spec = {
