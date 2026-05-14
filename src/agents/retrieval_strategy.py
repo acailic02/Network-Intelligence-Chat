@@ -88,8 +88,8 @@ preference.
 class Decision(BaseModel):
     action: Literal["finish", "relax", "rerank"]
     reasoning: str
-    drop_filters: list[str] = Field(default_factory=list, description="Filters that were dropped due to the reasoning both in this iteration and earlier ones. Use only when action is 'relax'.")
-    switch_strategy_to: Optional[Literal["structured_filter", "semantic_search", "hybrid_search"]] = None
+    drop_filters: list[str] = Field(description="Filters that were dropped due to the reasoning both in this iteration and earlier ones. Use only when action is 'relax'.")
+    switch_strategy_to: Literal["structured_filter", "semantic_search", "hybrid_search", ""]
 
 
 class RetrievalState(TypedDict):
