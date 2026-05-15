@@ -1,7 +1,7 @@
 from pydantic import BaseModel, Field
 from src.llm.client import parse
 from enum import Enum
-from typing import Optional, List
+from typing import Optional, List, Literal
 
 SYSTEM_PROMPT = """
     You are a query parser for a LinkedIn network search tool.
@@ -33,6 +33,12 @@ SYSTEM_PROMPT = """
     GENERAL RULES:
     1. Never infer or assume values that are not stated or clearly implied
     2. Never populate owner with verbs, roles or descriptions — only explicit person names
+
+    OPERATOR RULES:
+    1. Set operator to None if only one value is in the list
+    2. Set operator to ANY if user uses "or" logic — e.g. "works at Stripe or Revolut" -> company_name_operator: ANY
+    3. Set operator to ALL if user uses "and" logic — e.g. "knows both Python and JavaScript" -> skills_operator: ALL
+    4. If user does not specify, set operator to None
 """
 
 class QueryType(str, Enum):
@@ -44,22 +50,28 @@ class ConnectionFilters(BaseModel):
     country: Optional[List[str]] = Field(default=None, description="All countries explicitly mentioned in the user's query.")
     city: Optional[List[str]] = Field(default=None, description="All cities explicitly mentioned in the user's query. e.g. 'I need people from Zagreb, Belgrade too' -> ['Zagreb', 'Belgrade']")
     skills: Optional[List[str]] = Field(default=None, description="Skills explicitly mentioned in the user's query. Do not infer skills from context.")
+    skills_operator: Optional[Literal["ANY", "ALL"]] = Field(default=None, description="How many skills does SQL have to look for. Possible values are ANY/ALL, if user didnt specify set as None. If user asked for someone that has skill with C++ and JavaScript, value is set as ALL.")
 
 class PositionFilters(BaseModel):
     title: Optional[List[str]] = Field(default=None, description="Job titles explicitly mentioned in the user's query, e.g. 'developer', 'HR', 'ML engineer'.")
+    title_operator: Optional[Literal["ANY", "ALL"]] = Field(default=None, description="How many titles does found connections have to satisfy. Possible values are ANY/ALL, if user didnt specify set as None. If user asked for connections that have titles HR and Engineer, value is set as ALL.")
     company_name: Optional[List[str]] = Field(default=None, description="Specific company names mentioned in the user's query, e.g. 'Microsoft', 'Stripe'.")
+    company_name_operator: Optional[Literal["ANY", "ALL"]] = Field(default=None, description="How many company names does found connections have to satisfy. Possible values are ANY/ALL, if user didnt specify set as None. If user asked for connections that work in Rivian or Microsoft, value is set as ANY.")
     company_location: Optional[List[str]] = Field(default=None, description="Locations of companies mentioned in the user's query, e.g. 'companies based in London'.")
     recently_changed: Optional[bool] = Field(default=None, description="Set to true if user is looking for people who recently changed jobs.")
 
 class EducationFilters(BaseModel):
     degree: Optional[List[str]] = Field(default=None, description="Specific degrees mentioned in the user's query, e.g. 'master', 'phd'.")
+    degree_operator: Optional[Literal["ANY", "ALL"]] = Field(default=None, description="How many degrees does found connections have to satisfy. Possible values are ANY/ALL, if user didnt specify set as None. If user asked for connections that has to have any degree user asked for, value is set as ANY.")
     school_name: Optional[List[str]] = Field(default=None, description="Specific schools or universities mentioned in the user's query.")
+    school_name_operator: Optional[Literal["ANY", "ALL"]] = Field(default=None, description="How many schools does found connections have to satisfy. Possible values are ANY/ALL, if user didnt specify set as None. If user asked for connections that went to all schools mentioned, value is set as ALL.")
 
 class LookupAttributes(BaseModel):
     connection: Optional[ConnectionFilters] = Field(default=None, description="Filters related to the person's personal info, location and skills. If none of fields in class have value, set as None.")
     position: Optional[PositionFilters] = Field(default=None, description="Filters related to the person's work experience and companies. If none of fields in class have value, set as None.")
     education: Optional[EducationFilters] = Field(default=None, description="Filters related to the person's educational background. If none of fields in class have value, set as None.")
     owner: Optional[List[str]] = Field(default=None,description="Explicit person names mentioned by the user whose connections to search through. Only real person names, never verbs or roles.")
+    owner_operator: Optional[Literal["ANY", "ALL"]] = Field(default=None, description="How many owners does found connections have to satisfy. Possible values are ANY/ALL, if user didnt specify set as None. If user asked for connection that has connections with Jelena and Aleksandar, value is set as ALL.")
 
 class UserQuery(BaseModel):
     lookup_filters: LookupAttributes = Field(description="Structured filters extracted from the user's query.")
