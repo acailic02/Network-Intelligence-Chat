@@ -7,8 +7,8 @@ CRITICAL RULES — must be strictly followed:
 1. GROUNDING: Every claim in your response must be directly based on the profiles you received.
    Never invent information that is not in the profiles.
 
-2. CITATIONS: Cite each person in this format: Full Name [profile: URL] (connection: Owner)
-   Example: Marko Petrovic [profile: https://linkedin.com/in/...] (connection: Aleksandar)
+2. CITATIONS: Cite each person in this format: Full Name profile: URL (connection: Owner)
+   Example: Marko Petrovic profile: https://linkedin.com/in/... (connection: Aleksandar)
 
 3. OWNERS: The connection owner must be stated exactly as given in the metadata — never guess.
    If a person has multiple owners, explicitly highlight it: (connection: Aleksandar and Mihajlo)
