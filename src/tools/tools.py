@@ -1,4 +1,4 @@
-from typing import TypedDict
+from typing import TypedDict, Optional, Literal
 
 from langchain_core.tools import tool
 from sqlalchemy.orm import Session
@@ -49,7 +49,7 @@ def semantic_search(query: str, top_k: int = 10) -> list[Prof]:
             "current_job_title": None,
             "positions": None,
             "education": None,
-            "owners": metadata["owners"],
+            "owners": [metadata["owners"]],
         }
         for metadata in result["metadatas"][0]
     ]
@@ -59,22 +59,24 @@ def semantic_search(query: str, top_k: int = 10) -> list[Prof]:
 
 @tool
 def structured_filter(
-        country: str = None,
-        city: str = None,
-        skills_all: list[str] = None,
-        skills_any: list[str] = None,
-        owners_any: list[str] = None,
-        owners_all: list[str] = None,
+        country: list[str] = None,
+        city: list[str] = None,
+        skills: list[str] = None,
+        skills_operator: Optional[Literal["ANY", "ALL"]] = None,
+        owners: list[str] = None,
+        owners_operator: Optional[Literal["ANY", "ALL"]] = None,
         current_company_name: str = None,
-        company_location: str = None,
-        multiple_comapny_names_all: list[str] = None,
-        any_company_name: list[str] = None,
-        school_name: str = None,
-        degree: list[str] = None,
         current_job_title: str = None,
-        multiple_job_titles_all: list[str] = None,
-        any_job_title: list[str] = None,
-        limit: int = None,
+        company_location: list[str] = None,
+        company_name: list[str] = None,
+        company_name_operator: Optional[Literal["ANY", "ALL"]] = None,
+        school_name: list[str] = None,
+        school_name_operator: Optional[Literal["ANY", "ALL"]] = None,
+        degree: list[str] = None,
+        degree_operator: Optional[Literal["ANY", "ALL"]] = None,
+        job_title: list[str] = None,
+        job_title_operator: Optional[Literal["ANY", "ALL"]] = None,
+        limit: int = 50,
         offset: int = None
 ) -> list[Prof]:
     """
@@ -88,26 +90,29 @@ def structured_filter(
             session,
             country=country,
             city=city,
+            skills=skills,
+            skills_operator=skills_operator,
+            owners=owners,
+            owners_operator=owners_operator,
             current_company_name=current_company_name,
-            company_location=company_location,
-            multiple_comapny_names_all=multiple_comapny_names_all,
-            any_company_name=any_company_name,
             current_job_title=current_job_title,
-            any_job_title=any_job_title,
-            multiple_job_titles_all=multiple_job_titles_all,
+            company_location=company_location,
+            company_name=company_name,
+            company_name_operator=company_name_operator,
             school_name=school_name,
+            school_name_operator=school_name_operator,
             degree=degree,
-            skills_all=skills_all,
-            skills_any=skills_any,
-            owners_any=owners_any,
-            owners_all=owners_all,
-            limit=limit,
+            degree_operator=degree_operator,
+            job_title=job_title,
+            job_title_operator=job_title_operator,
+            offset=offset,
+            limit=50,
         )
         print(f"COUNTRY: {country}")
         print(f"CITY: {city}")
-        print(f"COMPANY: {any_company_name}")
-        print(f"JOB_TITLE: {any_job_title}")
-        print(f"OWNERS: {owners_all}")
+        print(f"COMPANY: {company_name}")
+        print(f"JOB_TITLE: {job_title}")
+        print(f"OWNERS: {owners}")
         profiles = [
             {
                 "name": f"{r.first_name} {r.last_name}",

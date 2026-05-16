@@ -26,17 +26,8 @@ switch retrieval strategy.
 - "rerank"  — the results contain enough relevant candidates but there are too 
 many or they are poorly ordered for this query. A re-ranking pass would help 
 surface the best ones. Only choose this when the strategy was "structured_filter" 
-or "hybrid_search"; semantic results are already similarity-ranked, so reranking 
-them rarely helps.
+or "hybrid_search"; semantic results are already similarity-ranked
 
-# How to judge "sufficient"
-There is NO fixed minimum or maximum number of results. Judge based on the query:
-- A specific lookup ("Who works at Stripe?") may need only 1–3 hits to be answerable.
-- A broad strategic query ("Who can introduce me to Series A investors?") usually
-needs a wider, diverse pool (5–15+) to allow good synthesis.
-- Empty or near-empty results almost always mean "relax" unless every filter
-has already been dropped — in that case, finish and let synthesis explain the gap.
-- Very large result sets (dozens+) for a focused query usually mean "rerank".
 
 # How to relax
 If you choose "relax", you MUST propose at least one concrete change:
@@ -47,32 +38,32 @@ specifically asked about a company).
 - `switch_strategy_to`: optionally switch the retrieval strategy. Use
 "semantic_search" when filters can't capture the user's intent (fuzzy or
 conceptual queries). Use "hybrid_search" when you want both filtering and
-similarity ranking. Leave null to keep the current strategy.
+similarity ranking. Use "no_change" to keep the current strategy. 
+(e.g. if user asks for people working in an area/field that is not exact position (can't be captured by structured filters, e.g. "game developement", "machine learning" etc.), and current strategy is 
+structured_filter, you should switch to either hybrid_search or semantic_search)
 
 You may do both (drop filters AND switch strategy) in the same step.
 
 Do NOT propose dropping a filter that is already in `relaxed_fields` — it has
 already been removed.
 
-Do NOT propose "relax" with an empty `drop_filters` and no `switch_strategy_to`
-— that would be a no-op. In that case, choose "finish" instead.
+Do NOT propose "relax" with an empty `drop_filters` 
 
 # Inputs you receive
 - original_query:   the user's natural-language question.
 - current_strategy: the retrieval strategy that produced the current results.
 - active_filters:   filters currently in effect (non-null only).
-- relaxed_fields:   filters already dropped in earlier iterations.
+- relaxed_filters:   filters already dropped in earlier iterations.
 - attempts:         how many evaluation rounds have already happened.
-- results_summary:  compact view of retrieved profiles (name, headline, owners).
-This is what synthesis will work with.
+- results:          retrieval results (dicts with information about each profile).
 
 # Output
 Return a structured decision matching the EvaluatorDecision schema:
 - action:               "finish" | "relax" | "rerank"
-- drop_filters:         list of filter names (only if action == "relax")
-- switch_strategy_to:   one of the three strategies, or null
+- drop_filters:         list of filter names (only if action == "relax", empty list if no drop_filters)
+- switch_strategy_to:   one of the three strategies, or "no_change" if no change
 - reasoning:            one or two sentences explaining your choice. Be specific:
-reference the query, the result count, and why the chosen action helps.
+reference the query, the results, and why the chosen action helps.
 
 # Important rules
 1. Prefer "finish" when results plausibly answer the query, even if imperfect —
@@ -82,14 +73,14 @@ already similarity-ranked results, dropping already-dropped filters).
 3. The "owners_all" filter represents which team members know the connection.
 Almost never drop this — it is a hard constraint of the user's question, not a
 preference.
-4. Be honest in `reasoning`. If you are unsure, say so and lean toward "finish".
+4. If you are unsure, say so and lean toward "finish".
 """
 
 class Decision(BaseModel):
     action: Literal["finish", "relax", "rerank"]
     reasoning: str
     drop_filters: list[str] = Field(description="Filters that were dropped due to the reasoning both in this iteration and earlier ones. Use only when action is 'relax'.")
-    switch_strategy_to: Literal["structured_filter", "semantic_search", "hybrid_search", ""]
+    switch_strategy_to: Literal["structured_filter", "semantic_search", "hybrid_search", "no_change"]
 
 
 class RetrievalState(TypedDict):
@@ -105,17 +96,18 @@ class RetrievalState(TypedDict):
 
 
 llm = get_llm()
-evaluator = llm.with_structured_output(Decision)
+retrieval_evaluator = llm.with_structured_output(Decision)
 
 cross_encoder = CrossEncoder("cross-encoder/ms-marco-MiniLM-L-6-v2")
 
+def get_filters(state: RetrievalState):
+    return {k: v for k, v in state["filters"].items() if v is not None}
 
 def route_retrieval_type(state: RetrievalState) -> str:
     return state["retrieval_type"]
 
 def structured_retrieval(state: RetrievalState) -> dict:
-    filters = {k: v for k, v in state["filters"].items() if v is not None}
-    results = structured_filter.invoke(filters)
+    results = structured_filter.invoke(get_filters(state))
     return {"results": results}
 
 def semantic_retrieval(state: RetrievalState) -> dict:
@@ -124,30 +116,30 @@ def semantic_retrieval(state: RetrievalState) -> dict:
 
 def hybrid_retrieval(state: RetrievalState) -> dict:
     kwargs = {
-        "filters": state["filters"],
+        "filters": get_filters(state),
         "query_text": state["query_text"]
     }
     results = hybrid_search.invoke(kwargs)
     return {"results": results}
 
-def llm_evaluation(state: RetrievalState) -> dict:
+def retrieval_evaluation(state: RetrievalState) -> dict:
     if state["attempts"] >= MAX_ATTEMPTS:
         return {"decision": Decision(action="finish", reasoning="No more attempts left.")}
 
     additional_info = {
         "user_question": state["user_input"],
-        "number_of_results": len(state["results"]),
-        "active_filters": {k: v for k, v in state["filters"].items() if v is not None},
-        "relaxed_fields": state["relaxed_filters"],
+        "retrieval_results": state["results"],
+        "active_filters": get_filters(state),
+        "relaxed_filters": state["relaxed_filters"],
         "attempts": state["attempts"],
     }
-    decision = evaluator.invoke([
+    decision = retrieval_evaluator.invoke([
         SystemMessage(content=EVALUATOR_PROMPT),
         HumanMessage(content=f"""
         User question: {additional_info["user_question"]}
-        Number of results: {additional_info["number_of_results"]}
+        Retrieval results: {additional_info["retrieval_results"]}
         Active filters: {additional_info["active_filters"]}
-        Relaxed fields: {additional_info["relaxed_fields"]}
+        Relaxed filters: {additional_info["relaxed_filters"]}
         Attempt number: {additional_info["attempts"]}
         """),
     ])
@@ -167,7 +159,12 @@ def relaxation_node(state: RetrievalState) -> dict:
         if f in active_filters:
             active_filters.pop(f)
 
-    return {"retrieval_type": state["decision"].switch_strategy_to or state["retrieval_type"], "filters": active_filters, "attempts": state["attempts"] + 1}
+    if state["decision"].switch_strategy_to != "no_change":
+        new_strategy = state["decision"].switch_strategy_to
+    else:
+        new_strategy = state["retrieval_type"]
+
+    return {"retrieval_type": new_strategy , "filters": active_filters, "attempts": state["attempts"] + 1}
 
 def reranking_node(state: RetrievalState) -> dict:
     results = {r.get("linkedin_url"): r for r in state["results"]}
@@ -187,16 +184,16 @@ graph = StateGraph(RetrievalState)
 graph.add_node("structured_retrieval", structured_retrieval)
 graph.add_node("semantic_retrieval", semantic_retrieval)
 graph.add_node("hybrid_retrieval", hybrid_retrieval)
-graph.add_node("llm_evaluation", llm_evaluation)
+graph.add_node("retrieval_evaluation", retrieval_evaluation)
 graph.add_node("relaxation_node", relaxation_node)
 graph.add_node("reranking_node", reranking_node)
 
 
 graph.add_conditional_edges(START, route_retrieval_type, {"structured_filter": "structured_retrieval", "semantic_search": "semantic_retrieval", "hybrid_search": "hybrid_retrieval"})
-graph.add_edge("semantic_retrieval", "llm_evaluation")
-graph.add_edge("structured_retrieval", "llm_evaluation")
-graph.add_edge("hybrid_retrieval", "llm_evaluation")
-graph.add_conditional_edges("llm_evaluation", route_next_action, {"finish": END, "relax": "relaxation_node", "rerank": "reranking_node"})
+graph.add_edge("semantic_retrieval", "retrieval_evaluation")
+graph.add_edge("structured_retrieval", "retrieval_evaluation")
+graph.add_edge("hybrid_retrieval", "retrieval_evaluation")
+graph.add_conditional_edges("retrieval_evaluation", route_next_action, {"finish": END, "relax": "relaxation_node", "rerank": "reranking_node"})
 graph.add_conditional_edges("relaxation_node", route_retrieval_type, {"structured_filter": "structured_retrieval", "semantic_search": "semantic_retrieval", "hybrid_search": "hybrid_retrieval"})
 graph.add_edge("reranking_node", END)
 
@@ -208,15 +205,24 @@ def retrieve(specification: UserQuery, user_input: str) -> list[dict]:
     education = specification.lookup_filters.education
     #TODO:insert filters for all possible parameters for get_connections() (leave untill query_understanding.py adopts changes)
     filters = {
-        "current_company_name": position.company_name[0] if position is not None and position.company_name is not None else None,
-        "company_location": position.company_location if position is not None else None,
-        "current_job_title": position.title[0] if position is not None and position.title is not None else None,
-        "country": connection.country[0] if connection is not None and connection.country is not None else None,
-        "city": connection.city[0] if connection is not None and connection.city is not None else None,
+        "country": connection.country if connection is not None and connection.country is not None else None,
+        "city": connection.city if connection is not None and connection.city is not None else None,
         "skills": connection.skills if connection is not None else None,
-        "degree": education.degree if education is not None else None,
+        "skills_operator": connection.skills_operator if connection is not None else None,
+        "owners": specification.lookup_filters.owner,
+        "owners_operator": specification.lookup_filters.owner_operator,
+        # "current_company_name": specification.lookup_filters.current_company_name,
+        # "current_job_title": specification.lookup_filters.current_job_title,
+        "company_location": position.company_location if position is not None else None,
+        "company_name": position.company_name if position is not None and position.company_name is not None else None,
+        "company_name_operator": position.company_name_operator if position is not None else None,
         "school_name": education.school_name if education is not None else None,
-        "owners_all": specification.lookup_filters.owner,
+        "school_name_operator": education.school_name_operator if education is not None else None,
+        "degree": education.degree if education is not None else None,
+        "degree_operator": education.degree_operator if education is not None else None,
+        "job_title": position.title if position is not None and position.title is not None else None,
+        "job_title_operator": position.title_operator if position is not None else None,
+        # "limit": specification.lookup_filters.limit,
     }
     print(filters)
     query_type = specification.query_type.value

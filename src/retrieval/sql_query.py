@@ -1,25 +1,29 @@
+from typing import Literal, Optional
+
 from sqlalchemy import select, func, and_, or_
 from sqlalchemy.orm import Session
 from src.storage.models import Profile, Positions, Education
 
 
 def get_connections(session: Session,
-                    country: str = None,
-                    city: str = None,
-                    skills_all: list[str] = None,
-                    skills_any: list[str] = None,
-                    owners_any: list[str] = None,
-                    owners_all: list[str] = None,
+                    country: list[str] = None,
+                    city: list[str] = None,
+                    skills: list[str] = None,
+                    skills_operator: Optional[Literal["ANY", "ALL"]] = None,
+                    owners: list[str] = None,
+                    owners_operator: Optional[Literal["ANY", "ALL"]] = None,
                     current_company_name: str = None,
-                    company_location: list[str] = None,
-                    multiple_comapny_names_all: list[str] = None,
-                    any_company_name: list[str] = None,
-                    school_name: str = None,
-                    degree: list[str] = None,
                     current_job_title: str = None,
-                    multiple_job_titles_all: list[str] = None,
-                    any_job_title: list[str] = None,
-                    limit: int = None,
+                    company_location: list[str] = None,
+                    company_name: list[str] = None,
+                    company_name_operator: Optional[Literal["ANY", "ALL"]] = None,
+                    school_name: list[str] = None,
+                    school_name_operator: Optional[Literal["ANY", "ALL"]] = None,
+                    degree: list[str] = None,
+                    degree_operator: Optional[Literal["ANY", "ALL"]] = None,
+                    job_title: list[str] = None,
+                    job_title_operator: Optional[Literal["ANY", "ALL"]] = None,
+                    limit: int = 50,
                     offset: int = None,):
     query = select(Profile).limit(limit).offset(offset)
 
@@ -35,36 +39,91 @@ def get_connections(session: Session,
     )
 
     if country:
-        query = query.where(Profile.country.ilike(f"%{country}%"))
+        conditions = []
+        for c in country:
+            conditions.append(Profile.country.ilike(f"%{c}%"))
+
+        query = query.where(or_(*conditions))
     if city:
-        query = query.where(Profile.city.ilike(f"%{city}%"))
-    if skills_all:
-        query = query.where(and_(*[func.array_to_string(Profile.skills, "|").ilike(f"%{skill}%") for skill in skills_all]))
-    if skills_any:
-        query = query.where(or_(*[func.array_to_string(Profile.skills, "|").ilike(f"%{skill}%") for skill in skills_any]))
-    if owners_any:
-        query = query.where(or_(*[func.array_to_string(Profile.owners, "|").ilike(f"%{owner}%") for owner in owners_any]))
-    if owners_all:
-        query = query.where(and_(*[func.array_to_string(Profile.owners, "|").ilike(f"%{owner}%") for owner in owners_all]))
+        conditions = []
+        for c in city:
+            conditions.append(Profile.city.ilike(f"%{c}%"))
+
+        query = query.where(or_(*conditions))
+    if skills:
+        conditions = []
+        for skill in skills:
+            conditions.append(Profile.skills.any(f"%{skill}%", operator=func.ilike))
+
+        match skills_operator:
+            case "ANY":
+                query = query.where(or_(*conditions))
+            case "ALL":
+                query = query.where(and_(*conditions))
+    if owners:
+        conditions = []
+        for owner in owners:
+            conditions.append(Profile.owners.any(f"%{owner}%", operator=func.ilike))
+
+        match owners_operator:
+            case "ANY":
+                query = query.where(or_(*conditions))
+            case "ALL":
+                query = query.where(and_(*conditions))
+
     if current_company_name:
         query = query.where(Profile.positions.any((Positions.id == min_position_id) & (Positions.company_name.ilike(f"%{current_company_name}%"))))
     if company_location:
-        query = query.where(Profile.positions.any(or_(*[Positions.company_location.ilike(f"%{location}%") for location in company_location])))
-    if multiple_comapny_names_all:
-        for company_name in multiple_comapny_names_all:
-            query = query.where(Profile.positions.any(Positions.company_name.ilike(f"%{company_name}%")))
-    if any_company_name:
-        query = query.where(Profile.positions.any(or_(*[Positions.company_name.ilike(f"%{company_name}%") for company_name in any_company_name])))
+        conditions = []
+        for location in company_location:
+            conditions.append(Profile.positions.any(Positions.company_location.ilike(f"{location}")))
+
+        match company_name_operator:
+            case "ANY":
+                query = query.where(or_(*conditions))
+            case "ALL":
+                query = query.where(and_(*conditions))
+    if company_name:
+        conditions = []
+        for name in company_name:
+            conditions.append(Profile.positions.any(Positions.company_name.ilike(f"{name}")))
+
+        match company_name_operator:
+            case "ANY":
+                query = query.where(or_(*conditions))
+            case "ALL":
+                query = query.where(and_(*conditions))
     if school_name:
-        query = query.where(Profile.education.any(Education.school_name.ilike(f"%{school_name}%")))
+        conditions = []
+        for name in school_name:
+            conditions.append(Profile.education.any(Education.school_name.ilike(f"{name}")))
+
+        match school_name_operator:
+            case "ANY":
+                query = query.where(or_(*conditions))
+            case "ALL":
+                query = query.where(and_(*conditions))
     if degree:
-        query = query.where(Profile.education.any(or_(*[Education.degree.ilike(f"%{d}%") for d in degree])))
+        conditions = []
+        for deg in degree:
+            conditions.append(Profile.education.any(Education.degree.ilike(f"{deg}")))
+
+        match degree_operator:
+            case "ANY":
+                query = query.where(or_(*conditions))
+            case "ALL":
+                query = query.where(and_(*conditions))
     if current_job_title:
         query = query.where(Profile.positions.any((Positions.id == min_position_id) & (Positions.title.ilike(f"%{current_job_title}%"))))
-    if any_job_title:
-        query = query.where(Profile.positions.any(or_(*[Positions.title.ilike(f"%{title}%") for title in any_job_title])))
-    if multiple_job_titles_all:
-        for job_title in multiple_job_titles_all:
-            query = query.where(Profile.positions.any(Positions.title.ilike(f"%{job_title}%")))
+    if job_title:
+        conditions = []
+        for title in job_title:
+            conditions.append(Profile.positions.any(Positions.title.ilike(f"{title}")))
+
+        match job_title_operator:
+            case "ANY":
+                query = query.where(or_(*conditions))
+            case "ALL":
+                query = query.where(and_(*conditions))
 
     return session.scalars(query).all()

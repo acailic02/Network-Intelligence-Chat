@@ -7,6 +7,7 @@ from src.storage.db import engine
 from src.agents.query_understanding import understand
 
 app = Flask(__name__)
+workflow = build_network_intelligence_workflow()
 
 @app.route("/")
 def index():
@@ -27,7 +28,6 @@ def systemRes():
 
     #profiles = [x.first_name + " " + x.last_name for x in query_res]
 
-    workflow = build_network_intelligence_workflow()
     result = workflow.invoke({"user_input": userMSG})
 
     return jsonify({
