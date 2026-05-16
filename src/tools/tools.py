@@ -30,13 +30,19 @@ class Prof(TypedDict):
     owners: list[str]
 
 @tool
-def semantic_search(query: str, top_k: int = 10) -> list[Prof]:
+def semantic_search(query: str, filters: dict = None, top_k: int = 10) -> list[Prof]:
     """
     Search LinkedIn profiles by semantic similarity over their headlines and summaries.
     Use this tool for fuzzy or conceptual queries that can't be looked up with structured SQL queries.
     Returns a ranked list of relevant profiles with their owners.
     """
-    result = semantic_query(query, top_k=top_k)
+    owners = filters.get("owners", None)
+    if owners:
+        owners = [owner.capitalize() for owner in owners]
+        semantic_filters = {"owners": {"$in": owners}}
+    else:
+        semantic_filters = None
+    result = semantic_query(query, semantic_filters, top_k=top_k)
 
     profiles = [
         {
@@ -49,7 +55,7 @@ def semantic_search(query: str, top_k: int = 10) -> list[Prof]:
             "current_job_title": None,
             "positions": None,
             "education": None,
-            "owners": [metadata["owners"]],
+            "owners": metadata["owners"],
         }
         for metadata in result["metadatas"][0]
     ]
@@ -152,7 +158,7 @@ def hybrid_search(filters: dict, query_text: str, top_k: int = 50) -> list[Prof]
     # Reuse the existing tools so the dict shape stays consistent and we don't
     # duplicate the ORM-to-dict conversion logic.
     structured_results = structured_filter.invoke(filters)
-    semantic_results = semantic_search.invoke({"query": query_text, "top_k": top_k})
+    semantic_results = semantic_search.invoke({"query": query_text, "filters": filters, "top_k": top_k})
 
     semantic_by_url = {p["linkedin_url"]: p for p in semantic_results}
 

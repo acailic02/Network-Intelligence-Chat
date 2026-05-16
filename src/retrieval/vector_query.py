@@ -2,7 +2,7 @@ import chromadb
 from sentence_transformers import SentenceTransformer
 import os
 
-def semantic_query(query_text: str, top_k: int = 10) -> list[dict]:
+def semantic_query(query_text: str, filters: dict, top_k: int = 10) -> list[dict]:
     base_dir = os.path.dirname(os.path.abspath(__file__))
     db_path = os.path.join(base_dir, "..", "..", "data", "vectors")
 
@@ -12,6 +12,6 @@ def semantic_query(query_text: str, top_k: int = 10) -> list[dict]:
     collection = client.get_collection("embeddings")
 
     query_embedding = model.encode([query_text]).tolist()
-    results = collection.query(query_embeddings=query_embedding)
+    results = collection.query(query_embeddings=query_embedding, where=filters, n_results=top_k)
 
     return results

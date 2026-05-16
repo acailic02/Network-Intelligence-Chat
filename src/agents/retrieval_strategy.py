@@ -88,6 +88,9 @@ prefer "finish" even if the result set is small (e.g. 1–10 results).
 5. Never recommend "semantic_search" if structured_filter already returned
 results that satisfy all active_filters.
 Semantic search is ONLY for cases where structured filters fail to capture intent.
+
+6.You should only switch strategie to "semantic_search" if you dropped already dropped all filters.
+Otherwise you should switch to "hybrid_search" to cover more cases.
 """
 
 class Decision(BaseModel):
@@ -121,14 +124,19 @@ def route_retrieval_type(state: RetrievalState) -> str:
     return state["retrieval_type"]
 
 def structured_retrieval(state: RetrievalState) -> dict:
+    print("======================================================================================STRUCTURED RETRIEVAL=======================================================================================")
+    print(state["filters"])
     results = structured_filter.invoke(get_filters(state))
     return {"results": results}
 
 def semantic_retrieval(state: RetrievalState) -> dict:
-    results = semantic_search.invoke(state["query_text"])
+    print("======================================================================================SEMANTIC RETRIEVAL=======================================================================================")
+    results = semantic_search.invoke({"query": state["query_text"], "filters": state["filters"]})
     return {"results": results}
 
 def hybrid_retrieval(state: RetrievalState) -> dict:
+    print("======================================================================================HYBRID RETRIEVAL=======================================================================================")
+    print(state["filters"])
     kwargs = {
         "filters": get_filters(state),
         "query_text": state["query_text"]

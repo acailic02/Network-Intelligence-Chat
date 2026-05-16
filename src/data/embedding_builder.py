@@ -28,7 +28,7 @@ def build_embeddings():
                 "headline": headline,
                 "summary": summary,
                 "linkedin_url": connection["source_row"]["url"],
-                "owners": ", ".join(connection["owners"])
+                "owners": connection["owners"]
             })
 
     embeddings = model.encode(text)

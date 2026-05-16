@@ -56,13 +56,16 @@ def get_connections(session: Session,
                 query = query.where(or_(*[func.array_to_string(Profile.skills, "|").ilike(f"%{skill}%") for skill in skills]))
             case "ALL":
                 query = query.where(and_(*[func.array_to_string(Profile.skills, "|").ilike(f"%{skill}%") for skill in skills]))
+            case _:
+                query = query.where(or_(*[func.array_to_string(Profile.skills, "|").ilike(f"%{skill}%") for skill in skills]))
     if owners:
         match owners_operator:
             case "ANY":
                 query = query.where(or_(*[func.array_to_string(Profile.owners, "|").ilike(f"%{owner}%") for owner in owners]))
             case "ALL":
                 query = query.where(and_(*[func.array_to_string(Profile.owners, "|").ilike(f"%{owner}%") for owner in owners]))
-
+            case _:
+                query = query.where(or_(*[func.array_to_string(Profile.owners, "|").ilike(f"%{owner}%") for owner in owners]))
     if current_company_name:
         query = query.where(Profile.positions.any((Positions.id == min_position_id) & (Positions.company_name.ilike(f"%{current_company_name}%"))))
     if company_location:
@@ -75,6 +78,8 @@ def get_connections(session: Session,
                 query = query.where(or_(*conditions))
             case "ALL":
                 query = query.where(and_(*conditions))
+            case _:
+                query = query.where(or_(*conditions))
     if company_name:
         conditions = []
         for name in company_name:
@@ -85,6 +90,8 @@ def get_connections(session: Session,
                 query = query.where(or_(*conditions))
             case "ALL":
                 query = query.where(and_(*conditions))
+            case _:
+                query = query.where(or_(*conditions))
     if school_name:
         conditions = []
         for name in school_name:
@@ -95,6 +102,8 @@ def get_connections(session: Session,
                 query = query.where(or_(*conditions))
             case "ALL":
                 query = query.where(and_(*conditions))
+            case _:
+                query = query.where(or_(*conditions))
     if degree:
         conditions = []
         for deg in degree:
@@ -105,6 +114,8 @@ def get_connections(session: Session,
                 query = query.where(or_(*conditions))
             case "ALL":
                 query = query.where(and_(*conditions))
+            case _:
+                query = query.where(or_(*conditions))
     if current_job_title:
         query = query.where(Profile.positions.any((Positions.id == min_position_id) & (Positions.title.ilike(f"%{current_job_title}%"))))
     if job_title:
@@ -117,5 +128,7 @@ def get_connections(session: Session,
                 query = query.where(or_(*conditions))
             case "ALL":
                 query = query.where(and_(*conditions))
+            case _:
+                query = query.where(or_(*conditions))
 
     return session.scalars(query).all()
