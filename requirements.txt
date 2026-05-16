@@ -1,0 +1,34 @@
+# Web
+Flask==3.1.3
+Werkzeug==3.1.8
+
+# DB
+SQLAlchemy==2.0.49
+psycopg2-binary==2.9.12
+
+# LLM orchestration
+langchain==1.2.14
+langchain-core==1.2.31
+langchain-community==0.4.1
+langchain-litellm==0.6.4
+langgraph==1.1.6
+litellm==1.83.8
+
+# Embeddings / semantic search
+sentence-transformers==5.4.1
+chromadb==1.5.7
+
+# ML backend (required by sentence-transformers)
+torch==2.6.0+cu124
+transformers==5.5.4
+
+# Config
+python-dotenv==1.0.1
+pydantic==2.12.5
+pydantic-settings==2.13.1
+
+# Utils
+numpy
+pandas
+requests
+tqdm
