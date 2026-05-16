@@ -19,6 +19,11 @@ CRITICAL RULES — must be strictly followed:
 
 5. TRANSPARENCY: At the end of your response, if the system did not find everything the user asked for, explicitly state what is missing.
 
+CRITICAL: The "Connection owners" field in each profile shows EXACTLY who knows that person.
+Never state an owner that is not listed in "Connection owners".
+Even if the user asked for "Petar's connections", if Petar is not in the owners list, do NOT say he is the owner.
+Instead, note that this profile was retrieved but Petar is not listed as an owner.
+
 Response format:
 - Start with the number of relevant profiles found
 - For each person: name, current position, why they are relevant, connection owner
@@ -27,44 +32,80 @@ Response format:
 
 
 def format_profiles_for_prompt(profiles: list[dict]) -> str:
+    """Formats profiles into text the LLM can read.
+    Compatible with both structured_filter and semantic_search output formats.
+    """
     if not profiles:
         return "No relevant profiles found."
 
     lines = []
     for i, p in enumerate(profiles, 1):
         owners = p.get("owners", [])
-        owners_str = " and ".join(owners)
+        owners_str = " and ".join(owners) if owners else "UNKNOWN"
 
         lines.append(f"--- Profile {i} ---")
         lines.append(f"Name: {p.get('name', 'N/A')}")
-        lines.append(f"LinkedIn URL: {p.get('linkedin_url', '')}")
-        lines.append(f"Connection owners: {owners_str}")
-        lines.append(f"Current position: {p.get('current_title', 'N/A')} @ {p.get('current_company', 'N/A')}")
-        lines.append(f"Location: {p.get('location', 'N/A')}")
-        lines.append(f"Industry: {p.get('industry', 'N/A')}")
-        lines.append(f"Headline: {p.get('headline', 'N/A')}")
-        lines.append(f"Summary: {p.get('summary', 'N/A')}")
+        lines.append(f"LinkedIn URL: {p.get('linkedin_url', 'N/A')}")
+        lines.append(f"Connection owners (VERIFIED, DO NOT CHANGE): {owners_str}")
+
+        # Compatible with both tool formats
+        title = p.get("current_job_title") or p.get("current_title", "N/A")
+        company = p.get("current_company", "N/A")
+        lines.append(f"Current position: {title} @ {company}")
+
+        location = p.get("location")
+        if location:
+            lines.append(f"Location: {location}")
+
+        industry = p.get("industry")
+        if industry:
+            lines.append(f"Industry: {industry}")
+
+        headline = p.get("headline")
+        if headline:
+            lines.append(f"Headline: {headline}")
+
+        summary = p.get("summary")
+        if summary:
+            lines.append(f"Summary: {summary}")
 
         skills = p.get("skills", [])
         if skills:
             lines.append(f"Skills: {', '.join(skills)}")
 
-        experience = p.get("experience", [])
-        if experience:
-            exp_strs = []
-            for e in experience[:3]:  # max 3 experiences
-                end = e.get("end") or "present"
-                exp_strs.append(f"{e.get('title')} @ {e.get('company')} ({e.get('start')}–{end})")
-            lines.append(f"Experience: {' | '.join(exp_strs)}")
+        # Positions from structured_filter
+        positions = p.get("positions", [])
+        if positions:
+            exp_strs = [
+                f"{e.get('title')} @ {e.get('company_name')}"
+                for e in positions[:3]
+                if e.get("title") or e.get("company_name")
+            ]
+            if exp_strs:
+                lines.append(f"Experience: {' | '.join(exp_strs)}")
+
+        # Education from structured_filter
+        education = p.get("education", [])
+        if education:
+            edu_strs = [
+                f"{e.get('degree')} @ {e.get('school_name')}"
+                for e in education[:2]
+                if e.get("degree") or e.get("school_name")
+            ]
+            if edu_strs:
+                lines.append(f"Education: {' | '.join(edu_strs)}")
 
         lines.append("")
 
     return "\n".join(lines)
 
-
 def synthesize(query: str, profiles: list[dict], conversation_history: list[dict] = None,) -> str:
     if not profiles:
         return "No connections found matching your query. Try different keywords."
+
+    for profile in profiles:
+        owners = profile.get("owners", [])
+        profile["_owners_verified"] = owners
 
     profiles_text = format_profiles_for_prompt(profiles)
 
