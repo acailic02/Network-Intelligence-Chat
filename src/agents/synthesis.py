@@ -129,4 +129,4 @@ Strictly stick to the data in the profiles — do not invent anything that is no
         system=SYNTHESIS_SYSTEM_PROMPT,
     )
 
-    return response["text"]
+    return response["text"], profiles

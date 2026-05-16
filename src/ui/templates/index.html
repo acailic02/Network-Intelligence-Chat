@@ -230,6 +230,110 @@
     }
     @keyframes fadeUp { from { opacity:0; transform:translateY(4px); } to { opacity:1; transform:translateY(0); } }
 
+    /* Expander za profile */
+    .profiles-expander {
+      margin-top: 16px;
+      border: 1px solid var(--border2);
+      border-radius: 10px;
+      background: var(--surface);
+      overflow: hidden;
+    }
+
+    .expander-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      cursor: pointer;
+      user-select: none;
+      transition: background 0.15s;
+    }
+    .expander-header:hover {
+      background: var(--surface2);
+    }
+
+    .expander-title {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text2);
+    }
+
+    .expander-arrow {
+      width: 16px;
+      height: 16px;
+      transition: transform 0.2s;
+      color: var(--text3);
+    }
+    .expander-arrow.open {
+      transform: rotate(180deg);
+    }
+
+    .expander-content {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s ease;
+    }
+    .expander-content.open {
+      max-height: 600px;
+      overflow-y: auto;
+    }
+
+    .profile-card {
+      padding: 14px 16px;
+      border-top: 1px solid var(--border);
+    }
+    .profile-card:first-child {
+      border-top: none;
+    }
+
+    .profile-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+
+    .profile-name {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .profile-score {
+      font-size: 11px;
+      font-family: var(--mono);
+      color: var(--accent);
+      background: var(--accent-soft);
+      padding: 3px 8px;
+      border-radius: 6px;
+    }
+
+    .profile-headline {
+      font-size: 12.5px;
+      color: var(--text2);
+      margin-bottom: 6px;
+    }
+
+    .profile-summary {
+      font-size: 12px;
+      color: var(--text3);
+      line-height: 1.5;
+      margin-bottom: 8px;
+    }
+
+    .profile-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 12px;
+      color: var(--accent2);
+      text-decoration: none;
+      transition: color 0.15s;
+    }
+    .profile-link:hover {
+      color: var(--accent);
+    }
+
     /* Typing dots */
     .typing-dots { display: flex; gap: 4px; align-items: center; padding: 3px 0; }
     .typing-dots span {
@@ -442,18 +546,55 @@
     return row;
   }
 
-  function addProfiles(profiles, contentEl) {
-    if (!profiles?.length) return;
-    const wrap = document.createElement('div');
-    wrap.className = 'profiles-wrap';
-    profiles.forEach((name, i) => {
-      const pill = document.createElement('div');
-      pill.className = 'profile-pill';
-      pill.style.animationDelay = (i * 35) + 'ms';
-      pill.textContent = name;
-      wrap.appendChild(pill);
-    });
-    contentEl.appendChild(wrap);
+  function addProfilesExpander(profiles, contentEl) {
+      if (!profiles?.length) return;
+
+      const expander = document.createElement('div');
+      expander.className = 'profiles-expander';
+
+      const header = document.createElement('div');
+      header.className = 'expander-header';
+      header.innerHTML = `
+        <div class="expander-title">View ${profiles.length} profile${profiles.length > 1 ? 's' : ''}</div>
+        <svg class="expander-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="6 9 12 15 18 9"></polyline>
+        </svg>
+      `;
+
+      const content = document.createElement('div');
+      content.className = 'expander-content';
+
+      profiles.forEach(p => {
+        const card = document.createElement('div');
+        card.className = 'profile-card';
+        card.innerHTML = `
+          <div class="profile-header">
+            <div class="profile-name">${escHtml(p.name)}</div>
+            ${p.relevance_score ? `<div class="profile-score">${(p.relevance_score * 100).toFixed(0)}%</div>` : ''}
+          </div>
+          ${p.headline ? `<div class="profile-headline">${escHtml(p.headline)}</div>` : ''}
+          ${p.relevance_summary ? `<div class="profile-summary">${escHtml(p.relevance_summary)}</div>` : ''}
+          <a href="${p.linkedin_url}" target="_blank" class="profile-link">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+              <polyline points="15 3 21 3 21 9"/>
+              <line x1="10" y1="14" x2="21" y2="3"/>
+            </svg>
+            View LinkedIn Profile
+          </a>
+        `;
+        content.appendChild(card);
+      });
+
+      header.addEventListener('click', () => {
+        const arrow = header.querySelector('.expander-arrow');
+        const isOpen = content.classList.toggle('open');
+        arrow.classList.toggle('open', isOpen);
+      });
+
+      expander.appendChild(header);
+      expander.appendChild(content);
+      contentEl.appendChild(expander);
   }
 
   async function send() {
@@ -493,7 +634,7 @@
       textEl.classList.add('md');
       textEl.innerHTML = marked.parse(data.systemRes || '');
 
-      if (data.profiles) addProfiles(data.profiles, contentEl);
+      if (data.profiles) addProfilesExpander(data.profiles, contentEl);
 
     } catch (e) {
       removeTyping();

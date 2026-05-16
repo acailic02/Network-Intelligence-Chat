@@ -14,6 +14,7 @@ def build_network_intelligence_workflow():
         query_understanding_state: UserQuery
         results: list[dict]
         answer: str
+        profiles_data: list[dict]
 
     def query_understanding_node(state: WorkflowState) -> dict:
         output = understand(state["user_input"])
@@ -25,8 +26,8 @@ def build_network_intelligence_workflow():
 
     def synthesis_node(state: WorkflowState) -> dict:
         profiles = state["results"]
-        answer = synthesize(state["user_input"], profiles)
-        return {"answer": answer}
+        answer, profiles_data = synthesize(state["user_input"], profiles)
+        return {"answer": answer, "profiles_data": profiles_data}
 
 
     graph = StateGraph(WorkflowState)

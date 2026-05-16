@@ -32,7 +32,7 @@ def systemRes():
 
     return jsonify({
         "systemRes": result["answer"],
-        #"profiles": profiles
+        "profiles": result["profiles_data"]
     })
 
 if __name__ == "__main__":
