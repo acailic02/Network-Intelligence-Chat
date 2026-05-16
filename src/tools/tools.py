@@ -126,7 +126,6 @@ def structured_filter(
                 "summary": None,
                 "linkedin_url": r.linkedin_url,
                 "location": f"{r.city}, {r.country}",
-                # TODO: move current_company to positions (leave it for now until synthesis.py adopts change)
                 "current_company": current_company_name if current_company_name else None, # if any profile is fetched that means we found profile with this current position
                 "current_job_title": current_job_title if current_job_title else None, # same as for the current_company_name
                 "positions":[

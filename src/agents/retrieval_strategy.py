@@ -6,7 +6,7 @@ from pydantic import BaseModel, Field
 from sentence_transformers import CrossEncoder
 
 from src.agents.query_understanding import UserQuery, LookupAttributes, QueryType
-from src.tools.tools import structured_filter, semantic_search, count_matches, hybrid_search
+from src.tools.tools import structured_filter, semantic_search, count_matches, hybrid_search, Prof
 from src.llm.client import get_llm
 
 MAX_ATTEMPTS = 5
@@ -93,12 +93,63 @@ Semantic search is ONLY for cases where structured filters fail to capture inten
 Otherwise you should switch to "hybrid_search" to cover more cases.
 """
 
+RELEVANCE_EVAL_PROMPT = """
+You are a Relevance Evaluator for a network intelligence assistant that searches 
+LinkedIn profiles across a team's combined network to answer user questions.
+
+# Task
+Evaluate how relevant each retrieved profile is for answering the user's question.
+Score each profile from 0.0 to 1.0:
+- 1.0 = Highly relevant, directly helps answer the question
+- 0.5-0.9 = Partially relevant, provides useful context
+- 0.0-0.4 = Low relevance, minimal help
+
+# What makes a profile relevant?
+Consider:
+- Job title/role matches the query domain
+- Skills/expertise align with what the user is asking
+- Experience/industry is directly related
+- Location matters (if query is geography-specific)
+- Company/education background is pertinent
+
+# Guidelines
+- Be strict: only high scores (>0.7) for profiles that DIRECTLY help answer the question
+- Profiles tangentially related (adjacent domain but no explicit mention of relevant keywords/experience) should score 0.3-0.7
+- Empty/incomplete profiles should score low (<0.3)
+- Provide clear reasoning in relevance_summary (1-2 sentences explaining WHY)
+
+# Inputs
+- user_question: the user's natural-language question
+- retrieved_profiles: list of profile dictionaries, each containing:
+  * name, headline, summary
+  * current company, job title
+  * skills, location, etc.
+
+# Output
+For each profile, provide:
+- linkedin_url: THE EXACT linkedin_url from input - copy it CHARACTER BY CHARACTER, including ALL numbers and dashes at the end. Do NOT shorten, normalize, or "fix" the URL.
+- relevance_score: float between 0.0 and 1.0
+- relevance_summary: brief explanation (1-2 sentences)
+
+CRITICAL RULE: The linkedin_url field MUST be an EXACT byte-for-byte copy from the input.
+Example CORRECT: https://www.linkedin.com/in/john-doe-123456789
+Example WRONG: https://www.linkedin.com/in/john-doe (missing numbers!)
+"""
+
 class Decision(BaseModel):
     action: Literal["finish", "relax", "rerank"]
     reasoning: str
     drop_filters: list[str] = Field(description="Filters that were dropped due to the reasoning both in this iteration and earlier ones. Use only when action is 'relax'.")
     switch_strategy_to: Literal["structured_filter", "semantic_search", "hybrid_search", "no_change"]
 
+class EvaluatedProf(BaseModel):
+    linkedin_url: str = Field(description="LinkedIn profile url as an unique identifier for the profile")
+    relevance_score: float = Field(ge=0.0, le=1.0, description="Relevance score of the profile.")
+    relevance_summary: str = Field(description="Short (1-2 sentence) summary of why the profile is relevant to the query.")
+
+
+class RelevanceEvaluation(BaseModel):
+    evaluated_results: list[EvaluatedProf]
 
 class RetrievalState(TypedDict):
     retrieval_type: Literal["structured_filter", "semantic_search", "hybrid_search"]
@@ -114,6 +165,7 @@ class RetrievalState(TypedDict):
 
 llm = get_llm()
 retrieval_evaluator = llm.with_structured_output(Decision)
+relevance_evaluator = llm.with_structured_output(RelevanceEvaluation)
 
 cross_encoder = CrossEncoder("cross-encoder/ms-marco-MiniLM-L-6-v2")
 
@@ -202,6 +254,30 @@ def reranking_node(state: RetrievalState) -> dict:
 
     return {"results": results}
 
+def relevance_evaluation(state: RetrievalState) -> dict:
+    results = state["results"]
+    query_text = state["query_text"]
+    evaluated = relevance_evaluator.invoke([
+        SystemMessage(content=RELEVANCE_EVAL_PROMPT),
+        HumanMessage(content=f"""
+        User question: {query_text}
+        Retrieval results: {results}
+        """)
+    ])
+
+    results_by_url = {r["linkedin_url"]: r for r in results}
+    enriched = [
+        {
+            **results_by_url[ev.linkedin_url],
+            "relevance_score": ev.relevance_score,
+            "relevance_summary": ev.relevance_summary
+        }
+        for ev in evaluated.evaluated_results
+        # if ev.linkedin_url in results_by_url
+    ]
+
+    return {"results": enriched}
+
 graph = StateGraph(RetrievalState)
 graph.add_node("structured_retrieval", structured_retrieval)
 graph.add_node("semantic_retrieval", semantic_retrieval)
@@ -209,15 +285,17 @@ graph.add_node("hybrid_retrieval", hybrid_retrieval)
 graph.add_node("retrieval_evaluation", retrieval_evaluation)
 graph.add_node("relaxation_node", relaxation_node)
 graph.add_node("reranking_node", reranking_node)
+graph.add_node("relevance_evaluation", relevance_evaluation)
 
 
 graph.add_conditional_edges(START, route_retrieval_type, {"structured_filter": "structured_retrieval", "semantic_search": "semantic_retrieval", "hybrid_search": "hybrid_retrieval"})
 graph.add_edge("semantic_retrieval", "retrieval_evaluation")
 graph.add_edge("structured_retrieval", "retrieval_evaluation")
 graph.add_edge("hybrid_retrieval", "retrieval_evaluation")
-graph.add_conditional_edges("retrieval_evaluation", route_next_action, {"finish": END, "relax": "relaxation_node", "rerank": "reranking_node"})
+graph.add_conditional_edges("retrieval_evaluation", route_next_action, {"finish": "relevance_evaluation", "relax": "relaxation_node", "rerank": "reranking_node"})
 graph.add_conditional_edges("relaxation_node", route_retrieval_type, {"structured_filter": "structured_retrieval", "semantic_search": "semantic_retrieval", "hybrid_search": "hybrid_retrieval"})
-graph.add_edge("reranking_node", END)
+graph.add_edge("reranking_node", "relevance_evaluation")
+graph.add_edge("relevance_evaluation", END)
 
 retrieval_strategy = graph.compile()
 
@@ -225,7 +303,6 @@ def retrieve(specification: UserQuery, user_input: str) -> list[dict]:
     position = specification.lookup_filters.position
     connection = specification.lookup_filters.connection
     education = specification.lookup_filters.education
-    #TODO:insert filters for all possible parameters for get_connections() (leave untill query_understanding.py adopts changes)
     filters = {
         "country": connection.country if connection is not None and connection.country is not None else None,
         "city": connection.city if connection is not None and connection.city is not None else None,
@@ -233,8 +310,8 @@ def retrieve(specification: UserQuery, user_input: str) -> list[dict]:
         "skills_operator": connection.skills_operator if connection is not None else None,
         "owners": specification.lookup_filters.owner,
         "owners_operator": specification.lookup_filters.owner_operator,
-        # "current_company_name": specification.lookup_filters.current_company_name,
-        # "current_job_title": specification.lookup_filters.current_job_title,
+        "current_company_name": connection.current_company_name if connection is not None else None,
+        "current_job_title": connection.current_job_title if connection is not None else None,
         "company_location": position.company_location if position is not None else None,
         "company_name": position.company_name if position is not None and position.company_name is not None else None,
         "company_name_operator": position.company_name_operator if position is not None else None,
@@ -244,7 +321,7 @@ def retrieve(specification: UserQuery, user_input: str) -> list[dict]:
         "degree_operator": education.degree_operator if education is not None else None,
         "job_title": position.title if position is not None and position.title is not None else None,
         "job_title_operator": position.title_operator if position is not None else None,
-        # "limit": specification.lookup_filters.limit,
+        "limit": specification.limit,
     }
     print(filters)
     query_type = specification.query_type.value
