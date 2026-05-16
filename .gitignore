@@ -9,6 +9,9 @@ EnrichedConnectionFiles/
 .env.*
 !.env.example
 
+# Data chroma cache
+.data/vectors/chroma.sqlite3
+
 # Raw data - never commit
 *.csv
 data/cache/
