@@ -1,0 +1,466 @@
+[
+    {
+      "id": 1,
+      "difficulty": "easy",
+      "type": "HYBRID",
+      "description": "Simple location + industry filter",
+      "input": "Who in our network works in fintech in Berlin?",
+      "expected": {
+        "query_type": "HYBRID",
+        "lookup_filters": {
+          "connection": {
+            "country": null,
+            "city": ["Berlin"],
+            "skills": null,
+            "skills_operator": null,
+            "current_company_name": null,
+            "current_job_title": null
+          },
+          "position": {
+            "title": null,
+            "title_operator": null,
+            "company_name": null,
+            "company_name_operator": null,
+            "company_location": ["Berlin"],
+            "recently_changed": null
+          },
+          "education": null,
+          "owner": null,
+          "owner_operator": null
+        },
+        "contextual_need": "people who work in fintech",
+        "contextual_trigger": null
+      }
+    },
+    {
+      "id": 2,
+      "difficulty": "easy",
+      "type": "LOOKUP",
+      "description": "Recently changed jobs filter",
+      "input": "Find connections who recently changed jobs",
+      "expected": {
+        "query_type": "LOOKUP",
+        "lookup_filters": {
+          "connection": null,
+          "position": {
+            "title": null,
+            "title_operator": null,
+            "company_name": null,
+            "company_name_operator": null,
+            "company_location": null,
+            "recently_changed": true
+          },
+          "education": null,
+          "owner": null,
+          "owner_operator": null
+        },
+        "contextual_need": null,
+        "contextual_trigger": null
+      }
+    },
+    {
+      "id": 3,
+      "difficulty": "easy",
+      "type": "LOOKUP",
+      "description": "Single company lookup",
+      "input": "List everyone we know at Stripe",
+      "expected": {
+        "query_type": "LOOKUP",
+        "lookup_filters": {
+          "connection": null,
+          "position": {
+            "title": null,
+            "title_operator": null,
+            "company_name": ["Stripe"],
+            "company_name_operator": null,
+            "company_location": null,
+            "recently_changed": null
+          },
+          "education": null,
+          "owner": null,
+          "owner_operator": null
+        },
+        "contextual_need": null,
+        "contextual_trigger": null
+      }
+    },
+    {
+      "id": 4,
+      "difficulty": "easy",
+      "type": "LOOKUP",
+      "description": "Multiple companies with OR logic",
+      "input": "Find connections who work at Stripe or Revolut",
+      "expected": {
+        "query_type": "LOOKUP",
+        "lookup_filters": {
+          "connection": null,
+          "position": {
+            "title": null,
+            "title_operator": null,
+            "company_name": ["Stripe", "Revolut"],
+            "company_name_operator": "ANY",
+            "company_location": null,
+            "recently_changed": null
+          },
+          "education": null,
+          "owner": null,
+          "owner_operator": null
+        },
+        "contextual_need": null,
+        "contextual_trigger": null
+      }
+    },
+    {
+      "id": 5,
+      "difficulty": "easy",
+      "type": "LOOKUP",
+      "description": "Current job title filter",
+      "input": "Who is currently a CTO in our network?",
+      "expected": {
+        "query_type": "LOOKUP",
+        "lookup_filters": {
+          "connection": {
+            "country": null,
+            "city": null,
+            "skills": null,
+            "skills_operator": null,
+            "current_company_name": null,
+            "current_job_title": "Chief Technology Officer"
+          },
+          "position": {
+            "title": ["Chief Technology Officer"],
+            "title_operator": null,
+            "company_name": null,
+            "company_name_operator": null,
+            "company_location": null,
+            "recently_changed": null
+          },
+          "education": null,
+          "owner": null,
+          "owner_operator": null
+        },
+        "contextual_need": null,
+        "contextual_trigger": null
+      }
+    },
+    {
+      "id": 6,
+      "difficulty": "easy",
+      "type": "LOOKUP",
+      "description": "Country filter only",
+      "input": "Show me all connections from Serbia",
+      "expected": {
+        "query_type": "LOOKUP",
+        "lookup_filters": {
+          "connection": {
+            "country": ["Serbia"],
+            "city": null,
+            "skills": null,
+            "skills_operator": null,
+            "current_company_name": null,
+            "current_job_title": null
+          },
+          "position": null,
+          "education": null,
+          "owner": null,
+          "owner_operator": null
+        },
+        "contextual_need": null,
+        "contextual_trigger": null
+      }
+    },
+    {
+      "id": 7,
+      "difficulty": "medium",
+      "type": "LOOKUP",
+      "description": "Skills with AND logic",
+      "input": "Find people in our network who know both Python and Machine Learning",
+      "expected": {
+        "query_type": "LOOKUP",
+        "lookup_filters": {
+          "connection": {
+            "country": null,
+            "city": null,
+            "skills": ["Python", "Machine Learning"],
+            "skills_operator": "ALL",
+            "current_company_name": null,
+            "current_job_title": null
+          },
+          "position": null,
+          "education": null,
+          "owner": null,
+          "owner_operator": null
+        },
+        "contextual_need": null,
+        "contextual_trigger": null
+      }
+    },
+    {
+      "id": 8,
+      "difficulty": "medium",
+      "type": "LOOKUP",
+      "description": "Education filter",
+      "input": "Who in our network graduated from MIT or Stanford?",
+      "expected": {
+        "query_type": "LOOKUP",
+        "lookup_filters": {
+          "connection": null,
+          "position": null,
+          "education": {
+            "degree": null,
+            "degree_operator": null,
+            "school_name": ["Massachusetts Institute of Technology", "Stanford"],
+            "school_name_operator": "ANY"
+          },
+          "owner": null,
+          "owner_operator": null
+        },
+        "contextual_need": null,
+        "contextual_trigger": null
+      }
+    },
+    {
+      "id": 9,
+      "difficulty": "medium",
+      "type": "LOOKUP",
+      "description": "Serbian abbreviation for faculty",
+      "input": "Ko je završio MATF ili ETF?",
+      "expected": {
+        "query_type": "LOOKUP",
+        "lookup_filters": {
+          "connection": null,
+          "position": null,
+          "education": {
+            "degree": null,
+            "degree_operator": null,
+            "school_name": ["Faculty of Mathematics", "School of Electrical Engineering"],
+            "school_name_operator": "ANY"
+          },
+          "owner": null,
+          "owner_operator": null
+        },
+        "contextual_need": null,
+        "contextual_trigger": null
+      }
+    },
+    {
+      "id": 10,
+      "difficulty": "medium",
+      "type": "LOOKUP",
+      "description": "Owner filter — whose connections to search",
+      "input": "Find connections that both Ana and Marko know",
+      "expected": {
+        "query_type": "LOOKUP",
+        "lookup_filters": {
+          "connection": null,
+          "position": null,
+          "education": null,
+          "owner": ["Ana", "Marko"],
+          "owner_operator": "ALL"
+        },
+        "contextual_need": null,
+        "contextual_trigger": null
+      }
+    },
+    {
+      "id": 11,
+      "difficulty": "medium",
+      "type": "DISCOVERY",
+      "description": "Industry filter + semantic need",
+      "input": "I'm raising a Series A, who in our network has advised or invested in B2B SaaS startups?",
+      "expected": {
+        "query_type": "DISCOVERY",
+        "lookup_filters": {
+          "connection": null,
+          "position": null,
+          "education": null,
+          "owner": null,
+          "owner_operator": null
+        },
+        "contextual_need": "person who has advised or invested in B2B SaaS startups",
+        "contextual_trigger": "raising a Series A"
+      }
+    },
+    {
+      "id": 12,
+      "difficulty": "medium",
+      "type": "HYBRID",
+      "description": "Location filter + semantic need",
+      "input": "I need a technical co-founder with ML experience based in London",
+      "expected": {
+        "query_type": "HYBRID",
+        "lookup_filters": {
+          "connection": {
+            "country": null,
+            "city": ["London"],
+            "skills": null,
+            "skills_operator": null,
+            "current_company_name": null,
+            "current_job_title": null
+          },
+          "position": null,
+          "education": null,
+          "owner": null,
+          "owner_operator": null
+        },
+        "contextual_need": "technical co-founder with Machine Learning experience",
+        "contextual_trigger": null
+      }
+    },
+    {
+      "id": 13,
+      "difficulty": "hard",
+      "type": "DISCOVERY",
+      "description": "Complex strategic query with event context",
+      "input": "I was invited to speak at Web Summit. Who in our network has been there, and who could I have dinner with?",
+      "expected": {
+        "query_type": "DISCOVERY",
+        "lookup_filters": {
+          "connection": null,
+          "position": null,
+          "education": null,
+          "owner": null,
+          "owner_operator": null
+        },
+        "contextual_need": "person who has attended Web Summit and would be good to have dinner with",
+        "contextual_trigger": "invited to speak at Web Summit"
+      }
+    },
+    {
+      "id": 14,
+      "difficulty": "hard",
+      "type": "HYBRID",
+      "description": "US expansion strategic query",
+      "input": "We are expanding to the US market. Who can open doors for us — partnerships, distribution, first clients?",
+      "expected": {
+        "query_type": "HYBRID",
+        "lookup_filters": {
+          "connection": {
+            "country": ["United States"],
+            "city": null,
+            "skills": null,
+            "skills_operator": null,
+            "current_company_name": null,
+            "current_job_title": null
+          },
+          "position": null,
+          "education": null,
+          "owner": null,
+          "owner_operator": null
+        },
+        "contextual_need": "person who can open doors for partnerships, distribution and first clients in the US market",
+        "contextual_trigger": "expanding to the US market"
+      }
+    },
+    {
+      "id": 15,
+      "difficulty": "hard",
+      "type": "HYBRID",
+      "description": "Between jobs + semantic role",
+      "input": "I need a technical co-founder with ML experience who is currently between jobs",
+      "expected": {
+        "query_type": "HYBRID",
+        "lookup_filters": {
+          "connection": {
+            "country": null,
+            "city": null,
+            "skills": ["Machine Learning"],
+            "skills_operator": null,
+            "current_company_name": null,
+            "current_job_title": null
+          },
+          "position": {
+            "title": null,
+            "title_operator": null,
+            "company_name": null,
+            "company_name_operator": null,
+            "company_location": null,
+            "recently_changed": true
+          },
+          "education": null,
+          "owner": null,
+          "owner_operator": null
+        },
+        "contextual_need": "technical co-founder with Machine Learning experience who is currently between jobs",
+        "contextual_trigger": null
+      }
+    },
+    {
+      "id": 16,
+      "difficulty": "hard",
+      "type": "DISCOVERY",
+      "description": "Pure semantic — no structured filters possible",
+      "input": "Who in our network would make a great first enterprise sales hire?",
+      "expected": {
+        "query_type": "DISCOVERY",
+        "lookup_filters": {
+          "connection": null,
+          "position": null,
+          "education": null,
+          "owner": null,
+          "owner_operator": null
+        },
+        "contextual_need": "person who would make a great first enterprise sales hire",
+        "contextual_trigger": null
+      }
+    },
+    {
+      "id": 17,
+      "difficulty": "hard",
+      "type": "HYBRID",
+      "description": "Multi-filter with strategic context and owner",
+      "input": "Ana told me to ask you — who in her network works in venture capital in New York or San Francisco?",
+      "expected": {
+        "query_type": "HYBRID",
+        "lookup_filters": {
+          "connection": {
+            "country": null,
+            "city": ["New York", "San Francisco"],
+            "skills": null,
+            "skills_operator": null,
+            "current_company_name": null,
+            "current_job_title": null
+          },
+          "position": null,
+          "education": null,
+          "owner": ["Ana"],
+          "owner_operator": null
+        },
+        "contextual_need": "person who works in venture capital",
+        "contextual_trigger": null
+      }
+    },
+    {
+      "id": 18,
+      "difficulty": "hard",
+      "type": "LOOKUP",
+      "description": "Serbian language input with abbreviation",
+      "input": "Nađi mi sve CTO-eve koji trenutno rade u Beogradu",
+      "expected": {
+        "query_type": "LOOKUP",
+        "lookup_filters": {
+          "connection": {
+            "country": null,
+            "city": ["Belgrade"],
+            "skills": null,
+            "skills_operator": null,
+            "current_company_name": null,
+            "current_job_title": "Chief Technology Officer"
+          },
+          "position": {
+            "title": ["Chief Technology Officer"],
+            "title_operator": null,
+            "company_name": null,
+            "company_name_operator": null,
+            "company_location": null,
+            "recently_changed": null
+          },
+          "education": null,
+          "owner": null,
+          "owner_operator": null
+        },
+        "contextual_need": null,
+        "contextual_trigger": null
+      }
+    }
+  ]
