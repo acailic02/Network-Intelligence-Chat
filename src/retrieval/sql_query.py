@@ -51,32 +51,24 @@ def get_connections(session: Session,
 
         query = query.where(or_(*conditions))
     if skills:
-        conditions = []
-        for skill in skills:
-            conditions.append(Profile.skills.any(f"%{skill}%", operator=func.ilike))
-
         match skills_operator:
             case "ANY":
-                query = query.where(or_(*conditions))
+                query = query.where(or_(*[func.array_to_string(Profile.skills, "|").ilike(f"%{skill}%") for skill in skills]))
             case "ALL":
-                query = query.where(and_(*conditions))
+                query = query.where(and_(*[func.array_to_string(Profile.skills, "|").ilike(f"%{skill}%") for skill in skills]))
     if owners:
-        conditions = []
-        for owner in owners:
-            conditions.append(Profile.owners.any(f"%{owner}%", operator=func.ilike))
-
         match owners_operator:
             case "ANY":
-                query = query.where(or_(*conditions))
+                query = query.where(or_(*[func.array_to_string(Profile.owners, "|").ilike(f"%{owner}%") for owner in owners]))
             case "ALL":
-                query = query.where(and_(*conditions))
+                query = query.where(and_(*[func.array_to_string(Profile.owners, "|").ilike(f"%{owner}%") for owner in owners]))
 
     if current_company_name:
         query = query.where(Profile.positions.any((Positions.id == min_position_id) & (Positions.company_name.ilike(f"%{current_company_name}%"))))
     if company_location:
         conditions = []
         for location in company_location:
-            conditions.append(Profile.positions.any(Positions.company_location.ilike(f"{location}")))
+            conditions.append(Profile.positions.any(Positions.company_location.ilike(f"%{location}%")))
 
         match company_name_operator:
             case "ANY":
@@ -86,7 +78,7 @@ def get_connections(session: Session,
     if company_name:
         conditions = []
         for name in company_name:
-            conditions.append(Profile.positions.any(Positions.company_name.ilike(f"{name}")))
+            conditions.append(Profile.positions.any(Positions.company_name.ilike(f"%{name}%")))
 
         match company_name_operator:
             case "ANY":
@@ -96,7 +88,7 @@ def get_connections(session: Session,
     if school_name:
         conditions = []
         for name in school_name:
-            conditions.append(Profile.education.any(Education.school_name.ilike(f"{name}")))
+            conditions.append(Profile.education.any(Education.school_name.ilike(f"%{name}%")))
 
         match school_name_operator:
             case "ANY":
@@ -106,7 +98,7 @@ def get_connections(session: Session,
     if degree:
         conditions = []
         for deg in degree:
-            conditions.append(Profile.education.any(Education.degree.ilike(f"{deg}")))
+            conditions.append(Profile.education.any(Education.degree.ilike(f"%{deg}%")))
 
         match degree_operator:
             case "ANY":
@@ -118,7 +110,7 @@ def get_connections(session: Session,
     if job_title:
         conditions = []
         for title in job_title:
-            conditions.append(Profile.positions.any(Positions.title.ilike(f"{title}")))
+            conditions.append(Profile.positions.any(Positions.title.ilike(f"%{title}%")))
 
         match job_title_operator:
             case "ANY":

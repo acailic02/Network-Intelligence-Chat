@@ -20,7 +20,8 @@ Your job is to look at the current retrieval results and decide what to do next.
 Decide ONE of three actions:
 - "finish"  — the current results are sufficient to answer the user's query well. 
 The synthesis step will use them as-is.
-- "relax"   — the results are too few, empty, or too narrow to answer the query. 
+- "relax" means: structured filters are preventing retrieval of relevant results,
+  not that the result count is low. 
 You must decide how to broaden the search: drop one or more filters, and/or 
 switch retrieval strategy.
 - "rerank"  — the results contain enough relevant candidates but there are too 
@@ -34,7 +35,7 @@ If you choose "relax", you MUST propose at least one concrete change:
 - `drop_filters`: list of filter names to remove. Pick filters that are most
 likely overly restrictive given the user's intent. Do NOT drop filters that are
 the core of the query (e.g. don't drop "current_company_name" if the user
-specifically asked about a company).
+specifically asked about a company). Be very careful to preserve users intent, if you cant dont drop any filters.
 - `switch_strategy_to`: optionally switch the retrieval strategy. Use
 "semantic_search" when filters can't capture the user's intent (fuzzy or
 conceptual queries). Use "hybrid_search" when you want both filtering and
@@ -43,6 +44,10 @@ similarity ranking. Use "no_change" to keep the current strategy.
 structured_filter, you should switch to either hybrid_search or semantic_search)
 
 You may do both (drop filters AND switch strategy) in the same step.
+
+If you cant preserve users intent just switch to another strategy without dropping any filters.
+DONT switch strategies if users question is easily captured with structured filters.
+DONT drop filters if by doing so the user's intent would be lost.
 
 Do NOT propose dropping a filter that is already in `relaxed_fields` — it has
 already been removed.
@@ -74,6 +79,15 @@ already similarity-ranked results, dropping already-dropped filters).
 Almost never drop this — it is a hard constraint of the user's question, not a
 preference.
 4. If you are unsure, say so and lean toward "finish".
+4b. A small number of highly relevant structured results is sufficient.
+Do NOT switch away from structured retrieval solely because the result count is low.
+
+If results match the active filters and satisfy the user's explicit constraints,
+prefer "finish" even if the result set is small (e.g. 1–10 results).
+
+5. Never recommend "semantic_search" if structured_filter already returned
+results that satisfy all active_filters.
+Semantic search is ONLY for cases where structured filters fail to capture intent.
 """
 
 class Decision(BaseModel):
