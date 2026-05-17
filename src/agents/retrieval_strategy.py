@@ -244,7 +244,7 @@ def reranking_node(state: RetrievalState) -> dict:
     results = {r.get("linkedin_url"): r for r in state["results"]}
     result_ids = list(results.keys())
     query_text = state["query_text"]
-    scores = cross_encoder.predict([(query_text, results[rid].get("headline", "") + "\\n" + results[rid].get("summary", "")) for rid in result_ids])
+    scores = cross_encoder.predict([(query_text, (results[rid].get("headline", "") or "") + "\\n" + (results[rid].get("summary", "") or "")) for rid in result_ids])
 
     ranked = sorted(zip(result_ids, scores), key=lambda x: x[1], reverse=True)
 
@@ -278,6 +278,11 @@ def relevance_evaluation(state: RetrievalState) -> dict:
 
     return {"results": enriched}
 
+def irrelevant_profiles_drop_off(state: RetrievalState) -> dict:
+    results = [result for result in state["results"] if result.get("relevance_score", 0.0) > 0.15]
+    return {"results": results}
+
+
 graph = StateGraph(RetrievalState)
 graph.add_node("structured_retrieval", structured_retrieval)
 graph.add_node("semantic_retrieval", semantic_retrieval)
@@ -286,6 +291,7 @@ graph.add_node("retrieval_evaluation", retrieval_evaluation)
 graph.add_node("relaxation_node", relaxation_node)
 graph.add_node("reranking_node", reranking_node)
 graph.add_node("relevance_evaluation", relevance_evaluation)
+graph.add_node("irrelevant_profiles_drop_off", irrelevant_profiles_drop_off)
 
 
 graph.add_conditional_edges(START, route_retrieval_type, {"structured_filter": "structured_retrieval", "semantic_search": "semantic_retrieval", "hybrid_search": "hybrid_retrieval"})
@@ -295,7 +301,8 @@ graph.add_edge("hybrid_retrieval", "retrieval_evaluation")
 graph.add_conditional_edges("retrieval_evaluation", route_next_action, {"finish": "relevance_evaluation", "relax": "relaxation_node", "rerank": "reranking_node"})
 graph.add_conditional_edges("relaxation_node", route_retrieval_type, {"structured_filter": "structured_retrieval", "semantic_search": "semantic_retrieval", "hybrid_search": "hybrid_retrieval"})
 graph.add_edge("reranking_node", "relevance_evaluation")
-graph.add_edge("relevance_evaluation", END)
+graph.add_edge("relevance_evaluation", "irrelevant_profiles_drop_off")
+graph.add_edge("irrelevant_profiles_drop_off", END)
 
 retrieval_strategy = graph.compile()
 
