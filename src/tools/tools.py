@@ -66,22 +66,30 @@ def semantic_search(query: str, filters: dict = None, top_k: int = 10) -> list[P
 @tool
 def structured_filter(
         country: list[str] = None,
+        exclude_country: list[str] = None,
         city: list[str] = None,
+        exclude_city: list[str] = None,
         skills: list[str] = None,
         skills_operator: Optional[Literal["ANY", "ALL"]] = None,
+        exclude_skills: list[str] = None,
         owners: list[str] = None,
         owners_operator: Optional[Literal["ANY", "ALL"]] = None,
+        exclude_owners: list[str] = None,
         current_company_name: str = None,
         current_job_title: str = None,
         company_location: list[str] = None,
         company_name: list[str] = None,
         company_name_operator: Optional[Literal["ANY", "ALL"]] = None,
+        exclude_company_name: list[str] = None,
         school_name: list[str] = None,
         school_name_operator: Optional[Literal["ANY", "ALL"]] = None,
+        exclude_school_name: list[str] = None,
         degree: list[str] = None,
         degree_operator: Optional[Literal["ANY", "ALL"]] = None,
+        exclude_degree: list[str] = None,
         job_title: list[str] = None,
         job_title_operator: Optional[Literal["ANY", "ALL"]] = None,
+        exclude_job_title: list[str] = None,
         limit: int = 50,
         offset: int = None
 ) -> list[Prof]:
@@ -95,30 +103,34 @@ def structured_filter(
         results = get_connections(
             session,
             country=country,
+            exclude_country=exclude_country,
             city=city,
+            exclude_city=exclude_city,
             skills=skills,
             skills_operator=skills_operator,
+            exclude_skills=exclude_skills,
             owners=owners,
             owners_operator=owners_operator,
+            exclude_owners=exclude_owners,
             current_company_name=current_company_name,
             current_job_title=current_job_title,
             company_location=company_location,
             company_name=company_name,
             company_name_operator=company_name_operator,
+            exclude_company_name=exclude_company_name,
             school_name=school_name,
             school_name_operator=school_name_operator,
+            exclude_school_name=exclude_school_name,
             degree=degree,
             degree_operator=degree_operator,
+            exclude_degree=exclude_degree,
             job_title=job_title,
             job_title_operator=job_title_operator,
+            exclude_job_title=exclude_job_title,
             offset=offset,
             limit=50,
         )
-        print(f"COUNTRY: {country}")
-        print(f"CITY: {city}")
-        print(f"COMPANY: {company_name}")
-        print(f"JOB_TITLE: {job_title}")
-        print(f"OWNERS: {owners}")
+
         profiles = [
             {
                 "name": f"{r.first_name} {r.last_name}",
