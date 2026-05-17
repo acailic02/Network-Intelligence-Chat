@@ -38,16 +38,27 @@
       overflow: hidden;
     }
 
-    /* ── Full-screen chat shell ── */
     .app {
       display: flex;
       flex-direction: column;
       height: 100vh;
       max-width: 800px;
       margin: 0 auto;
+      position: relative;
     }
 
-    /* ── Top bar ── */
+    /* ── Graph canvas overlay ── */
+    #graphCanvas {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.6s ease;
+      z-index: 0;
+    }
+    #graphCanvas.visible { opacity: 1; }
+
     .topbar {
       display: flex;
       align-items: center;
@@ -56,16 +67,26 @@
       border-bottom: 1px solid var(--border);
       flex-shrink: 0;
       gap: 10px;
+      position: relative;
+      z-index: 2;
     }
 
     .logo-mark {
       width: 28px; height: 28px;
-      background: linear-gradient(135deg, #e8334a, #3a6ff7);
+      background: #1a0608;
+      border: 1px solid rgba(232,51,74,0.35);
       border-radius: 7px;
       display: flex; align-items: center; justify-content: center;
       font-family: var(--mono);
       font-size: 11px; font-weight: 500;
-      color: #fff;
+      color: #e8334a;
+      position: relative;
+      overflow: hidden;
+    }
+    .logo-mark::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0; height: 40%;
+      background: rgba(232,51,74,0.07);
     }
 
     .model-dot {
@@ -73,17 +94,17 @@
       background: var(--green); box-shadow: 0 0 5px var(--green);
     }
 
-    /* ── Messages area ── */
     .messages-wrap {
       flex: 1;
       overflow-y: auto;
       scrollbar-width: thin;
       scrollbar-color: var(--surface3) transparent;
+      position: relative;
+      z-index: 2;
     }
     .messages-wrap::-webkit-scrollbar { width: 5px; }
     .messages-wrap::-webkit-scrollbar-thumb { background: var(--surface3); border-radius: 3px; }
 
-    /* ── Empty / welcome state ── */
     .empty-state {
       display: flex;
       flex-direction: column;
@@ -136,7 +157,6 @@
       background: var(--accent-soft);
     }
 
-    /* ── Messages list ── */
     .messages {
       max-width: 800px;
       margin: 0 auto;
@@ -161,14 +181,23 @@
       font-size: 11px; font-weight: 600;
       flex-shrink: 0; margin-top: 2px;
     }
-    .msg-avatar.ai   { background: linear-gradient(135deg, #e8334a, #3a6ff7); color: #fff; font-family: var(--mono); }
+    .msg-avatar.ai   {
+      background: #1a0608;
+      border: 1px solid rgba(232,51,74,0.3);
+      color: #e8334a;
+      font-family: var(--mono);
+      position: relative; overflow: hidden;
+    }
+    .msg-avatar.ai::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 45%;
+      background: rgba(232,51,74,0.07);
+    }
     .msg-avatar.user { background: var(--surface3); color: var(--text2); font-family: var(--font); font-size: 12px; }
 
     .msg-content { flex: 1; min-width: 0; }
     .msg-name { font-size: 12.5px; font-weight: 600; color: var(--text); margin-bottom: 5px; }
     .msg-text { font-size: 14.5px; line-height: 1.75; color: var(--text); white-space: pre-wrap; word-break: break-word; }
 
-    /* Markdown rendered content */
     .msg-text.md { white-space: normal; }
     .msg-text.md p { margin-bottom: 10px; }
     .msg-text.md p:last-child { margin-bottom: 0; }
@@ -181,9 +210,7 @@
     .msg-text.md h1 { font-size: 18px; }
     .msg-text.md h2 { font-size: 16px; }
     .msg-text.md h3 { font-size: 15px; }
-    .msg-text.md ul, .msg-text.md ol {
-      padding-left: 20px; margin-bottom: 10px;
-    }
+    .msg-text.md ul, .msg-text.md ol { padding-left: 20px; margin-bottom: 10px; }
     .msg-text.md li { margin-bottom: 4px; }
     .msg-text.md code {
       font-family: var(--mono); font-size: 13px;
@@ -194,19 +221,15 @@
       background: var(--surface3); border-radius: 8px;
       padding: 12px 14px; margin: 10px 0; overflow-x: auto;
     }
-    .msg-text.md pre code {
-      background: none; padding: 0; color: var(--text2);
-    }
+    .msg-text.md pre code { background: none; padding: 0; color: var(--text2); }
     .msg-text.md a { color: var(--accent); text-decoration: none; }
     .msg-text.md a:hover { text-decoration: underline; }
     .msg-text.md blockquote {
       border-left: 3px solid var(--accent);
-      padding-left: 12px; color: var(--text2);
-      margin: 8px 0;
+      padding-left: 12px; color: var(--text2); margin: 8px 0;
     }
     .msg-text.md hr { border: none; border-top: 1px solid var(--border2); margin: 12px 0; }
 
-    /* Streaming cursor */
     .cursor {
       display: inline-block; width: 2px; height: 15px;
       background: var(--accent); border-radius: 1px;
@@ -215,7 +238,6 @@
     }
     @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
 
-    /* Profile pills */
     .profiles-wrap { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
     .profile-pill {
       display: flex; align-items: center; gap: 5px;
@@ -230,7 +252,6 @@
     }
     @keyframes fadeUp { from { opacity:0; transform:translateY(4px); } to { opacity:1; transform:translateY(0); } }
 
-    /* Expander za profile */
     .profiles-expander {
       margin-top: 16px;
       border: 1px solid var(--border2);
@@ -248,107 +269,75 @@
       user-select: none;
       transition: background 0.15s;
     }
-    .expander-header:hover {
-      background: var(--surface2);
-    }
+    .expander-header:hover { background: var(--surface2); }
 
-    .expander-title {
-      font-size: 13px;
-      font-weight: 500;
-      color: var(--text2);
-    }
+    .expander-title { font-size: 13px; font-weight: 500; color: var(--text2); }
 
     .expander-arrow {
-      width: 16px;
-      height: 16px;
+      width: 16px; height: 16px;
       transition: transform 0.2s;
       color: var(--text3);
     }
-    .expander-arrow.open {
-      transform: rotate(180deg);
-    }
+    .expander-arrow.open { transform: rotate(180deg); }
 
-    .expander-content {
-      max-height: 0;
-      overflow: hidden;
-      transition: max-height 0.3s ease;
-    }
-    .expander-content.open {
-      max-height: 600px;
-      overflow-y: auto;
-    }
+    .expander-content { max-height: 0; overflow: hidden; transition: max-height 0.3s ease; }
+    .expander-content.open { max-height: 600px; overflow-y: auto; }
 
-    .profile-card {
-      padding: 14px 16px;
-      border-top: 1px solid var(--border);
-    }
-    .profile-card:first-child {
-      border-top: none;
-    }
+    .profile-card { padding: 14px 16px; border-top: 1px solid var(--border); }
+    .profile-card:first-child { border-top: none; }
 
     .profile-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 8px;
+      display: flex; align-items: center;
+      justify-content: space-between; margin-bottom: 8px;
     }
 
-    .profile-name {
-      font-size: 14px;
-      font-weight: 600;
-      color: var(--text);
-    }
+    .profile-name { font-size: 14px; font-weight: 600; color: var(--text); }
 
     .profile-score {
-      font-size: 11px;
-      font-family: var(--mono);
-      color: var(--accent);
-      background: var(--accent-soft);
-      padding: 3px 8px;
-      border-radius: 6px;
+      font-size: 11px; font-family: var(--mono);
+      color: var(--accent); background: var(--accent-soft);
+      padding: 3px 8px; border-radius: 6px;
     }
 
-    .profile-headline {
-      font-size: 12.5px;
-      color: var(--text2);
-      margin-bottom: 6px;
-    }
-
-    .profile-summary {
-      font-size: 12px;
-      color: var(--text3);
-      line-height: 1.5;
-      margin-bottom: 8px;
-    }
+    .profile-headline { font-size: 12.5px; color: var(--text2); margin-bottom: 6px; }
+    .profile-summary { font-size: 12px; color: var(--text3); line-height: 1.5; margin-bottom: 8px; }
 
     .profile-link {
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      font-size: 12px;
-      color: var(--accent2);
-      text-decoration: none;
-      transition: color 0.15s;
+      display: inline-flex; align-items: center; gap: 5px;
+      font-size: 12px; color: var(--accent2);
+      text-decoration: none; transition: color 0.15s;
     }
-    .profile-link:hover {
-      color: var(--accent);
-    }
+    .profile-link:hover { color: var(--accent); }
 
-    /* Typing dots */
-    .typing-dots { display: flex; gap: 4px; align-items: center; padding: 3px 0; }
-    .typing-dots span {
-      width: 5px; height: 5px; border-radius: 50%;
-      background: var(--text3); animation: td 1.1s infinite ease-in-out;
+    .thinking-text {
+      font-size: 13px;
+      color: var(--text3);
+      font-family: var(--mono);
+      letter-spacing: 0.01em;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 2px 0;
     }
-    .typing-dots span:nth-child(2) { animation-delay: 0.18s; }
-    .typing-dots span:nth-child(3) { animation-delay: 0.36s; }
+    .thinking-text .t-dot {
+      width: 4px; height: 4px; border-radius: 50%;
+      background: var(--accent); opacity: 0.5;
+      flex-shrink: 0;
+      animation: td 1.1s infinite ease-in-out;
+    }
+    .thinking-text .t-phrase {
+      animation: phraseIn 0.3s ease both;
+    }
+    @keyframes phraseIn { from { opacity:0; transform:translateY(3px); } to { opacity:1; transform:translateY(0); } }
+    .typing-dots { display: flex; gap: 4px; align-items: center; padding: 3px 0; }
     @keyframes td { 0%,60%,100%{transform:scale(1);opacity:0.35} 30%{transform:scale(1.4);opacity:1} }
 
-    /* ── Input area ── */
     .input-shell {
       padding: 12px 24px 20px;
       flex-shrink: 0;
       border-top: 1px solid var(--border);
+      position: relative;
+      z-index: 2;
     }
 
     .input-box {
@@ -378,15 +367,23 @@
     .send-btn {
       position: absolute; right: 9px; bottom: 9px;
       width: 34px; height: 34px; border-radius: 9px;
-      border: none; background: linear-gradient(135deg, #e8334a, #3a6ff7); color: #fff;
+      border: 1px solid rgba(232,51,74,0.5);
+      background: #1a0608;
+      color: #e8334a;
       cursor: pointer; display: flex; align-items: center; justify-content: center;
-      transition: background 0.15s, transform 0.1s, opacity 0.15s;
+      transition: background 0.15s, transform 0.1s, opacity 0.15s, border-color 0.15s;
+      position: absolute; right: 9px; bottom: 9px;
+      overflow: hidden;
     }
-    .send-btn:hover:not(:disabled) { background: linear-gradient(135deg, #3a6ff7, #e8334a); }
+    .send-btn::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 45%;
+      background: rgba(232,51,74,0.08);
+    }
+    .send-btn svg { position: relative; z-index: 1; }
+    .send-btn:hover:not(:disabled) { background: #270a0e; border-color: rgba(232,51,74,0.8); }
     .send-btn:active:not(:disabled) { transform: scale(0.93); }
     .send-btn:disabled { opacity: 0.25; cursor: default; }
 
-    /* Waiting / streaming state */
     .input-box.waiting {
       border-radius: 14px;
       animation: pulse-border 1.8s ease-in-out infinite;
@@ -403,17 +400,17 @@
   </style>
 </head>
 <body>
+
+<!-- Graph canvas — behind everything -->
+<canvas id="graphCanvas"></canvas>
+
 <div class="app">
 
-  <!-- Top bar -->
   <div class="topbar">
     <div class="logo-mark">M</div>
   </div>
 
-  <!-- Messages / welcome -->
   <div class="messages-wrap" id="messagesWrap">
-
-    <!-- Welcome screen -->
     <div class="empty-state" id="emptyState">
       <div class="empty-logo">M</div>
       <div class="empty-title">How can I help you today?</div>
@@ -426,21 +423,16 @@
       </div>
     </div>
 
-    <!-- Chat messages -->
     <div class="messages" id="messages"></div>
-
   </div>
 
-  <!-- Input -->
   <div class="input-shell">
     <div class="input-box">
       <textarea id="userInput" placeholder="Message MAP…" rows="1"></textarea>
       <button class="send-btn" id="sendBtn" disabled>
-        <!-- Arrow up (default) -->
         <svg id="iconSend" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
           <line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/>
         </svg>
-        <!-- Stop square (while waiting) -->
         <svg id="iconStop" width="12" height="12" viewBox="0 0 24 24" fill="currentColor" style="display:none">
           <rect x="4" y="4" width="16" height="16" rx="2"/>
         </svg>
@@ -452,6 +444,246 @@
 </div>
 
 <script>
+  /* ── Graph animation ── */
+  const canvas = document.getElementById('graphCanvas');
+  const ctx = canvas.getContext('2d');
+  let animFrame = null;
+  let graphActive = false;
+  let nodes = [];
+  let edges = [];
+
+  const ACCENT = '#e8334a';
+  const NODE_COUNT = 32;
+  const SIDE_WIDTH = 0.30; // wider corridor = more scattered
+
+  function resize() {
+    canvas.width  = window.innerWidth;
+    canvas.height = window.innerHeight;
+  }
+  resize();
+  window.addEventListener('resize', () => { resize(); if (graphActive) rebuildGraph(); });
+
+  function sideMaxX(side) {
+    // Hard boundary: left nodes stay left of 30%, right nodes stay right of 70%
+    return side === 'left' ? canvas.width * SIDE_WIDTH : canvas.width * (1 - SIDE_WIDTH);
+  }
+
+  function randSide() {
+    const w = canvas.width;
+    const h = canvas.height;
+    const side = Math.random() < 0.5 ? 'left' : 'right';
+    let x;
+    if (side === 'left') {
+      // Spread across the full left corridor, biased a bit inward
+      x = Math.random() * w * SIDE_WIDTH;
+    } else {
+      x = w - Math.random() * w * SIDE_WIDTH;
+    }
+    // Distribute vertically across full height
+    const y = Math.random() * h;
+    return { x, y, side };
+  }
+
+  function buildNodes() {
+    nodes = [];
+    for (let i = 0; i < NODE_COUNT; i++) {
+      const pos = randSide();
+      const r = 2.5 + Math.random() * 3.5;
+      nodes.push({
+        x: pos.x,
+        y: pos.y,
+        vx: (Math.random() - 0.5) * 0.18,
+        vy: (Math.random() - 0.5) * 0.18,
+        r,
+        alpha: 0,
+        targetAlpha: 0.35 + Math.random() * 0.45,
+        fadeIn: Math.random() * 0.012 + 0.004,
+        side: pos.side,
+        born: Date.now() + Math.random() * 1800, // staggered birth
+        dead: false,
+        dying: false,
+        dieAt: Date.now() + 3000 + Math.random() * 5000,
+      });
+    }
+  }
+
+  function buildEdges() {
+    edges = [];
+    for (let i = 0; i < nodes.length; i++) {
+      for (let j = i + 1; j < nodes.length; j++) {
+        if (nodes[i].side !== nodes[j].side) continue; // strict same-side only
+        const dx = nodes[i].x - nodes[j].x;
+        const dy = nodes[i].y - nodes[j].y;
+        const dist = Math.sqrt(dx*dx + dy*dy);
+        // Larger threshold so scattered nodes still connect, but lower probability
+        const threshold = canvas.width * 0.18;
+        if (dist < threshold && Math.random() < 0.35) {
+          edges.push({ a: i, b: j, alpha: 0, targetAlpha: 0.06 + Math.random() * 0.10 });
+        }
+      }
+    }
+  }
+
+  function rebuildGraph() {
+    buildNodes();
+    buildEdges();
+  }
+
+  function drawGraph(ts) {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    const now = Date.now();
+
+    // Revive dead nodes
+    nodes.forEach((n, idx) => {
+      if (n.dead) {
+        // Respawn
+        const pos = randSide();
+        n.x = pos.x; n.y = pos.y; n.side = pos.side;
+        n.vx = (Math.random() - 0.5) * 0.18;
+        n.vy = (Math.random() - 0.5) * 0.18;
+        n.r = 2.5 + Math.random() * 3.5;
+        n.alpha = 0;
+        n.targetAlpha = 0.35 + Math.random() * 0.45;
+        n.fadeIn = Math.random() * 0.012 + 0.004;
+        n.born = now + Math.random() * 1000;
+        n.dead = false;
+        n.dying = false;
+        n.dieAt = now + 3500 + Math.random() * 5000;
+        // Rebuild edges when nodes respawn
+        buildEdges();
+      }
+    });
+
+    // Update nodes
+    nodes.forEach(n => {
+      if (now < n.born) return;
+
+      // Fade lifecycle
+      if (!n.dying && now > n.dieAt) n.dying = true;
+
+      if (!n.dying) {
+        n.alpha += (n.targetAlpha - n.alpha) * n.fadeIn;
+      } else {
+        n.alpha -= 0.006;
+        if (n.alpha <= 0) { n.alpha = 0; n.dead = true; return; }
+      }
+
+      // Move
+      n.x += n.vx;
+      n.y += n.vy;
+
+      // Drift back toward own side center
+      const w = canvas.width;
+      const sideCenterX = n.side === 'left' ? w * 0.15 : w * 0.85;
+      n.vx += (sideCenterX - n.x) * 0.00022;
+      n.vy += (canvas.height / 2 - n.y) * 0.00005;
+      // Dampen
+      n.vx *= 0.994;
+      n.vy *= 0.994;
+      // Hard clamp — never cross into chat area
+      const boundary = sideMaxX(n.side);
+      if (n.side === 'left'  && n.x > boundary) { n.x = boundary; n.vx *= -0.4; }
+      if (n.side === 'right' && n.x < boundary) { n.x = boundary; n.vx *= -0.4; }
+    });
+
+    // Draw edges
+    edges.forEach(e => {
+      const a = nodes[e.a], b = nodes[e.b];
+      if (a.dead || b.dead || a.alpha < 0.01 || b.alpha < 0.01) return;
+      const alpha = Math.min(a.alpha, b.alpha) * 0.55;
+      ctx.beginPath();
+      ctx.moveTo(a.x, a.y);
+      ctx.lineTo(b.x, b.y);
+      ctx.strokeStyle = `rgba(232,51,74,${alpha})`;
+      ctx.lineWidth = 0.7;
+      ctx.stroke();
+    });
+
+    // Draw nodes
+    nodes.forEach(n => {
+      if (n.alpha < 0.005 || now < n.born) return;
+      ctx.beginPath();
+      ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(232,51,74,${n.alpha})`;
+      ctx.fill();
+      // Tiny ring for bigger nodes
+      if (n.r > 4) {
+        ctx.beginPath();
+        ctx.arc(n.x, n.y, n.r + 2.5, 0, Math.PI * 2);
+        ctx.strokeStyle = `rgba(232,51,74,${n.alpha * 0.25})`;
+        ctx.lineWidth = 0.8;
+        ctx.stroke();
+      }
+    });
+
+    if (graphActive) animFrame = requestAnimationFrame(drawGraph);
+  }
+
+  function startGraph() {
+    if (graphActive) return;
+    graphActive = true;
+    rebuildGraph();
+    canvas.classList.add('visible');
+    animFrame = requestAnimationFrame(drawGraph);
+  }
+
+  function stopGraph() {
+    graphActive = false;
+    // Keep canvas visible — fade-out loop will clear it when done
+    // Mark all nodes as dying — they'll fade out on their own in the last animation pass
+    nodes.forEach(n => { if (!n.dead) n.dying = true; });
+    // Run one last fade loop until everything is gone, then stop
+    function fadeOut() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      let anyAlive = false;
+
+      edges.forEach(e => {
+        const a = nodes[e.a], b = nodes[e.b];
+        if (a.alpha < 0.01 || b.alpha < 0.01) return;
+        const alpha = Math.min(a.alpha, b.alpha) * 0.55;
+        ctx.beginPath();
+        ctx.moveTo(a.x, a.y);
+        ctx.lineTo(b.x, b.y);
+        ctx.strokeStyle = `rgba(232,51,74,${alpha})`;
+        ctx.lineWidth = 0.7;
+        ctx.stroke();
+      });
+
+      nodes.forEach(n => {
+        n.alpha -= 0.008;
+        if (n.alpha <= 0) { n.alpha = 0; return; }
+        anyAlive = true;
+        // Keep moving
+        n.x += n.vx;
+        n.y += n.vy;
+        n.vx *= 0.997;
+        n.vy *= 0.997;
+        ctx.beginPath();
+        ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(232,51,74,${n.alpha})`;
+        ctx.fill();
+        if (n.r > 4) {
+          ctx.beginPath();
+          ctx.arc(n.x, n.y, n.r + 2.5, 0, Math.PI * 2);
+          ctx.strokeStyle = `rgba(232,51,74,${n.alpha * 0.25})`;
+          ctx.lineWidth = 0.8;
+          ctx.stroke();
+        }
+      });
+
+      if (anyAlive) {
+        animFrame = requestAnimationFrame(fadeOut);
+      } else {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        canvas.classList.remove('visible');
+        if (animFrame) { cancelAnimationFrame(animFrame); animFrame = null; }
+      }
+    }
+    if (animFrame) cancelAnimationFrame(animFrame);
+    animFrame = requestAnimationFrame(fadeOut);
+  }
+
+  /* ── Chat logic ── */
   const messagesEl   = document.getElementById('messages');
   const messagesWrap = document.getElementById('messagesWrap');
   const inputEl      = document.getElementById('userInput');
@@ -463,17 +695,18 @@
   const iconStop     = document.getElementById('iconStop');
 
   let isWaiting = false;
-  let activeReader = null; // so we can cancel mid-stream
+  let activeReader = null;
 
   function setWaiting(on) {
     isWaiting = on;
     inputBox.classList.toggle('waiting', on);
     inputHint.classList.toggle('waiting', on);
     inputEl.placeholder = on ? 'Generating…' : 'Message MAP…';
-    sendBtn.disabled = false; // always enabled while waiting (acts as stop)
+    sendBtn.disabled = false;
     sendBtn.classList.toggle('stop', on);
     iconSend.style.display = on ? 'none' : '';
     iconStop.style.display = on ? '' : 'none';
+    if (on) startGraph(); else stopGraph();
   }
 
   function scrollToBottom() {
@@ -515,6 +748,23 @@
     scrollToBottom();
   }
 
+  const THINKING_PHRASES = [
+    'traversing the graph…',
+    'mapping connections…',
+    'following edges…',
+    'scanning clusters…',
+    'resolving nodes…',
+    'tracing paths…',
+    'linking vertices…',
+    'indexing the network…',
+    'crossing bridges…',
+    'exploring branches…',
+    'weighting edges…',
+    'collapsing subgraphs…',
+    'propagating signals…',
+  ];
+  let thinkingInterval = null;
+
   function addTypingRow() {
     const row = document.createElement('div');
     row.className = 'msg-row ai';
@@ -523,13 +773,29 @@
       <div class="msg-avatar ai">M</div>
       <div class="msg-content">
         <div class="msg-name">MAP</div>
-        <div class="typing-dots"><span></span><span></span><span></span></div>
+        <div class="thinking-text">
+          <span class="t-dot"></span>
+          <span class="t-phrase" id="thinking-phrase">${THINKING_PHRASES[0]}</span>
+        </div>
       </div>`;
     messagesEl.appendChild(row);
     autoScroll();
+
+    let idx = 1;
+    thinkingInterval = setInterval(() => {
+      const el = document.getElementById('thinking-phrase');
+      if (!el) { clearInterval(thinkingInterval); return; }
+      el.style.animation = 'none';
+      el.offsetHeight; // reflow to restart animation
+      el.style.animation = '';
+      el.textContent = THINKING_PHRASES[idx % THINKING_PHRASES.length];
+      idx++;
+    }, 4000);
   }
 
   function removeTyping() {
+    clearInterval(thinkingInterval);
+    thinkingInterval = null;
     document.getElementById('typing-row')?.remove();
   }
 
@@ -547,101 +813,83 @@
   }
 
   function addProfilesExpander(profiles, contentEl) {
-      if (!profiles?.length) return;
-
-      const expander = document.createElement('div');
-      expander.className = 'profiles-expander';
-
-      const header = document.createElement('div');
-      header.className = 'expander-header';
-      header.innerHTML = `
-        <div class="expander-title">View ${profiles.length} profile${profiles.length > 1 ? 's' : ''}</div>
-        <svg class="expander-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <polyline points="6 9 12 15 18 9"></polyline>
-        </svg>
-      `;
-
-      const content = document.createElement('div');
-      content.className = 'expander-content';
-
-      profiles.forEach(p => {
-        const card = document.createElement('div');
-        card.className = 'profile-card';
-        card.innerHTML = `
-          <div class="profile-header">
-            <div class="profile-name">${escHtml(p.name)}</div>
-            ${p.relevance_score ? `<div class="profile-score">${(p.relevance_score * 100).toFixed(0)}%</div>` : ''}
-          </div>
-          ${p.headline ? `<div class="profile-headline">${escHtml(p.headline)}</div>` : ''}
-          ${p.relevance_summary ? `<div class="profile-summary">${escHtml(p.relevance_summary)}</div>` : ''}
-          <a href="${p.linkedin_url}" target="_blank" class="profile-link">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
-              <polyline points="15 3 21 3 21 9"/>
-              <line x1="10" y1="14" x2="21" y2="3"/>
-            </svg>
-            View LinkedIn Profile
-          </a>
-        `;
-        content.appendChild(card);
-      });
-
-      header.addEventListener('click', () => {
-        const arrow = header.querySelector('.expander-arrow');
-        const isOpen = content.classList.toggle('open');
-        arrow.classList.toggle('open', isOpen);
-      });
-
-      expander.appendChild(header);
-      expander.appendChild(content);
-      contentEl.appendChild(expander);
+    if (!profiles?.length) return;
+    const expander = document.createElement('div');
+    expander.className = 'profiles-expander';
+    const header = document.createElement('div');
+    header.className = 'expander-header';
+    header.innerHTML = `
+      <div class="expander-title">View ${profiles.length} profile${profiles.length > 1 ? 's' : ''}</div>
+      <svg class="expander-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="6 9 12 15 18 9"></polyline>
+      </svg>`;
+    const content = document.createElement('div');
+    content.className = 'expander-content';
+    profiles.forEach(p => {
+      const card = document.createElement('div');
+      card.className = 'profile-card';
+      card.innerHTML = `
+        <div class="profile-header">
+          <div class="profile-name">${escHtml(p.name)}</div>
+          ${p.relevance_score ? `<div class="profile-score">${(p.relevance_score * 100).toFixed(0)}%</div>` : ''}
+        </div>
+        ${p.headline ? `<div class="profile-headline">${escHtml(p.headline)}</div>` : ''}
+        ${p.relevance_summary ? `<div class="profile-summary">${escHtml(p.relevance_summary)}</div>` : ''}
+        <a href="${p.linkedin_url}" target="_blank" class="profile-link">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+            <polyline points="15 3 21 3 21 9"/>
+            <line x1="10" y1="14" x2="21" y2="3"/>
+          </svg>
+          View LinkedIn Profile
+        </a>`;
+      content.appendChild(card);
+    });
+    header.addEventListener('click', () => {
+      const arrow = header.querySelector('.expander-arrow');
+      const isOpen = content.classList.toggle('open');
+      arrow.classList.toggle('open', isOpen);
+    });
+    expander.appendChild(header);
+    expander.appendChild(content);
+    contentEl.appendChild(expander);
   }
 
   async function send() {
-    // If waiting, clicking send = stop (just re-enable UI, can't cancel non-streaming)
     if (isWaiting) {
       setWaiting(false);
       sendBtn.disabled = inputEl.value.trim() === '';
       return;
     }
-
     const msg = inputEl.value.trim();
     if (!msg) return;
-
     inputEl.value = '';
     autoResize();
     setWaiting(true);
     showMessages();
     addUserRow(msg);
     addTypingRow();
-
     try {
       const res = await fetch('/send', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message: msg })
       });
-
       if (!res.ok) throw new Error('Server error ' + res.status);
-
       const data = await res.json();
       removeTyping();
-
-      const aiRow     = addAiRow();
-      const textEl    = aiRow.querySelector('#stream-target');
+      const aiRow  = addAiRow();
+      const textEl = aiRow.querySelector('#stream-target');
       const contentEl = aiRow.querySelector('.msg-content');
       textEl.removeAttribute('id');
       textEl.classList.add('md');
       textEl.innerHTML = marked.parse(data.systemRes || '');
-
       if (data.profiles) addProfilesExpander(data.profiles, contentEl);
-
     } catch (e) {
       removeTyping();
       const aiRow = addAiRow();
       aiRow.querySelector('#stream-target').textContent = 'Something went wrong. Please try again.';
     }
-
     activeReader = null;
     setWaiting(false);
     sendBtn.disabled = inputEl.value.trim() === '';
