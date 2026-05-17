@@ -282,6 +282,10 @@ def irrelevant_profiles_drop_off(state: RetrievalState) -> dict:
     results = [result for result in state["results"] if result.get("relevance_score", 0.0) > 0.15]
     return {"results": results}
 
+def final_profile_sorting(state: RetrievalState) -> dict:
+    results = state["results"]
+    return {"results": sorted(results, key=lambda x: x.get("relevance_score", 0.0), reverse=True)}
+
 
 graph = StateGraph(RetrievalState)
 graph.add_node("structured_retrieval", structured_retrieval)
@@ -292,6 +296,7 @@ graph.add_node("relaxation_node", relaxation_node)
 graph.add_node("reranking_node", reranking_node)
 graph.add_node("relevance_evaluation", relevance_evaluation)
 graph.add_node("irrelevant_profiles_drop_off", irrelevant_profiles_drop_off)
+graph.add_node("final_profile_sorting", final_profile_sorting)
 
 
 graph.add_conditional_edges(START, route_retrieval_type, {"structured_filter": "structured_retrieval", "semantic_search": "semantic_retrieval", "hybrid_search": "hybrid_retrieval"})
@@ -302,7 +307,8 @@ graph.add_conditional_edges("retrieval_evaluation", route_next_action, {"finish"
 graph.add_conditional_edges("relaxation_node", route_retrieval_type, {"structured_filter": "structured_retrieval", "semantic_search": "semantic_retrieval", "hybrid_search": "hybrid_retrieval"})
 graph.add_edge("reranking_node", "relevance_evaluation")
 graph.add_edge("relevance_evaluation", "irrelevant_profiles_drop_off")
-graph.add_edge("irrelevant_profiles_drop_off", END)
+graph.add_edge("irrelevant_profiles_drop_off", "final_profile_sorting")
+graph.add_edge("final_profile_sorting", END)
 
 retrieval_strategy = graph.compile()
 
