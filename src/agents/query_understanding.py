@@ -93,6 +93,24 @@ SYSTEM_PROMPT = """
     3. Set operator to ALL if user uses "and" logic — e.g. "knows both Python and JavaScript" -> skills_operator: ALL
     4. If user does not specify, set operator to None
 
+    EXCLUSION RULES:
+    1. Exclusion fields (exc_*) are populated when user explicitly does NOT want certain values
+    2. Never infer exclusions — only populate if user explicitly states they do not want something
+        e.g. "Find developers but not from Microsoft" 
+                -> exc_company_name: ["Microsoft"]
+             "I need people from Serbia, not from Belgrade" 
+                -> country: ["Serbia"], exc_city: ["Belgrade"]
+             "Find ML engineers but not junior ones" 
+                -> title: ["Machine Learning Engineer"], exc_title: ["Junior Machine Learning Engineer"]
+             "Everyone from our network except Jelena's connections" 
+                -> exc_title: ["Jelena"] (owner exclusion)
+    3. Exclusion and inclusion can be populated at the same time
+        e.g. "Find Python developers in Berlin, but not from Google"
+                -> city: ["Berlin"], skills: ["Python"], exc_company_name: ["Google"]
+    4. If user says "only" or "exclusively" that is an inclusion, not an exclusion
+        e.g. "Only people from Serbia" 
+                -> country: ["Serbia"], NOT exc_country of everything else
+
     current_company_name and current_job_title RULES:
     1. These fields represent current snapshot information directly associated with the person's profile
     2. They live in ConnectionFilters, NOT PositionFilters
@@ -109,28 +127,35 @@ class QueryType(str, Enum):
 
 class ConnectionFilters(BaseModel):
     country: Optional[List[str]] = Field(default=None, description="All countries explicitly mentioned in the user's query.")
+    exc_country: Optional[List[str]] = Field(default=None, description="User explicitly DOES NOT want connections from these countries.")
     city: Optional[List[str]] = Field(default=None, description="All cities explicitly mentioned in the user's query. e.g. 'I need people from Zagreb, Belgrade too' -> ['Zagreb', 'Belgrade']")
+    exc_city: Optional[List[str]] = Field(default=None, description="User explicitly DOES NOT want connections from these cities.")
     skills: Optional[List[str]] = Field(default=None, 
                                         description="""Skills explicitly mentioned in the user's query. 
                                         Look for keywords as: 'knows', 'has/is experience', 'works with', 'proficient', 'expert', 'background in'...  
                                         Do not infer skills from context.""")
     skills_operator: Optional[Literal["ANY", "ALL"]] = Field(default=None, description="How many skills does SQL have to look for. Possible values are ANY/ALL, if user didnt specify set as None. If user asked for someone that has skill with C++ and JavaScript, value is set as ALL.")
+    exc_skills: Optional[List[str]] = Field(default=None, description="User explicitly DOES NOT want connections with these skills.")
     current_company_name: Optional[str] = Field(default=None, description="The current company the user is looking for, explicitly mentioned as current or present. e.g. 'Who currently works at Google' -> 'Google'. Do not populate if user is asking for any past or general company experience.")
     current_job_title: Optional[str] = Field(default=None, description="The current job title the user is looking for, explicitly mentioned as current or present. e.g. 'Who is currently a CTO' -> 'CTO'. Do not populate if user is asking for any past or general title experience.")
 
 class PositionFilters(BaseModel):
     title: Optional[List[str]] = Field(default=None, description="Job titles explicitly mentioned in the user's query, e.g. 'developer', 'HR', 'ML engineer'.")
     title_operator: Optional[Literal["ANY", "ALL"]] = Field(default=None, description="How many titles does found connections have to satisfy. Possible values are ANY/ALL, if user didnt specify set as None. If user asked for connections that have titles HR and Engineer, value is set as ALL.")
+    exc_title: Optional[List[str]] = Field(default=None, description="User explicitly DOES NOT want connections with these titles.")
     company_name: Optional[List[str]] = Field(default=None, description="Specific company names mentioned in the user's query, e.g. 'Microsoft', 'Stripe'.")
     company_name_operator: Optional[Literal["ANY", "ALL"]] = Field(default=None, description="How many company names does found connections have to satisfy. Possible values are ANY/ALL, if user didnt specify set as None. If user asked for connections that work in Rivian or Microsoft, value is set as ANY.")
+    exc_company_name: Optional[List[str]] = Field(default=None, description="User explicitly DOES NOT want connections working in these companies.")
     company_location: Optional[List[str]] = Field(default=None, description="Locations of companies mentioned in the user's query, e.g. 'companies based in London'; 'working in game developing in Serbia'")
     recently_changed: Optional[bool] = Field(default=None, description="Set to true if user is looking for people who recently changed jobs.")
 
 class EducationFilters(BaseModel):
     degree: Optional[List[str]] = Field(default=None, description="Specific degrees mentioned in the user's query, e.g. 'master', 'phd'.")
     degree_operator: Optional[Literal["ANY", "ALL"]] = Field(default=None, description="How many degrees does found connections have to satisfy. Possible values are ANY/ALL, if user didnt specify set as None. If user asked for connections that has to have any degree user asked for, value is set as ANY.")
+    exc_degree: Optional[List[str]] = Field(default=None, description="User explicitly DOES NOT want connections with these degrees.")
     school_name: Optional[List[str]] = Field(default=None, description="Specific schools or universities mentioned in the user's query.")
     school_name_operator: Optional[Literal["ANY", "ALL"]] = Field(default=None, description="How many schools does found connections have to satisfy. Possible values are ANY/ALL, if user didnt specify set as None. If user asked for connections that went to all schools mentioned, value is set as ALL.")
+    exc_school_name: Optional[List[str]] = Field(default=None, description="User explicitly DOES NOT want connections that went to these schools.")
 
 class LookupAttributes(BaseModel):
     connection: Optional[ConnectionFilters] = Field(default=None, description="Filters related to the person's personal info, location and skills. If none of fields in class have value, set as None.")
@@ -138,6 +163,7 @@ class LookupAttributes(BaseModel):
     education: Optional[EducationFilters] = Field(default=None, description="Filters related to the person's educational background. If none of fields in class have value, set as None.")
     owner: Optional[List[Literal["Jelena", "Aleksandar", "Mihajlo", "Petar"]]] = Field(default=None,description="Explicit person names mentioned by the user whose connections to search through. Only real person names, never verbs or roles.")
     owner_operator: Optional[Literal["ANY", "ALL"]] = Field(default=None, description="How many owners does found connections have to satisfy. Possible values are ANY/ALL, if user didnt specify set as None. If user asked for connection that has connections with Jelena and Aleksandar, value is set as ALL.")
+    exc_owner: Optional[Literal["Jelena", "Aleksandar", "Mihajlo", "Petar"]] = Field(default=None, description="User explicitly DOES NOT want connections from these owners.")
 
 class UserQuery(BaseModel):
     lookup_filters: LookupAttributes = Field(description="Structured filters extracted from the user's query.")
