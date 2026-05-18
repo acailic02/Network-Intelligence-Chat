@@ -79,7 +79,7 @@ def get_connections(session: Session,
             case _:
                 query = query.where(or_(*[func.array_to_string(Profile.skills, "|").ilike(f"%{skill}%") for skill in skills]))
     if exclude_skills:
-        query = query.where(and_(*[~func.array_to_string(Profile.skills, "|").ilike(f"%{skill}%") for skill in skills]))
+        query = query.where(and_(*[~func.array_to_string(Profile.skills, "|").ilike(f"%{skill}%") for skill in exclude_skills]))
     if owners:
         match owners_operator:
             case "ANY":
@@ -89,7 +89,7 @@ def get_connections(session: Session,
             case _:
                 query = query.where(or_(*[func.array_to_string(Profile.owners, "|").ilike(f"%{owner}%") for owner in owners]))
     if exclude_owners:
-        query = query.where(and_(*[~func.array_to_string(Profile.owners, "|").ilike(f"%{owner}%") for owner in owners]))
+        query = query.where(and_(*[~func.array_to_string(Profile.owners, "|").ilike(f"%{owner}%") for owner in exclude_owners]))
     if current_company_name:
         query = query.where(Profile.positions.any((Positions.id == min_position_id) & (Positions.company_name.ilike(f"%{current_company_name}%"))))
     if company_location:
@@ -97,13 +97,7 @@ def get_connections(session: Session,
         for location in company_location:
             conditions.append(Profile.positions.any(Positions.company_location.ilike(f"%{location}%")))
 
-        match company_name_operator:
-            case "ANY":
-                query = query.where(or_(*conditions))
-            case "ALL":
-                query = query.where(and_(*conditions))
-            case _:
-                query = query.where(or_(*conditions))
+        query = query.where(or_(*conditions))
     if company_name:
         conditions = []
         for name in company_name:
@@ -118,7 +112,7 @@ def get_connections(session: Session,
                 query = query.where(or_(*conditions))
     if exclude_company_name:
         conditions = []
-        for name in company_name:
+        for name in exclude_company_name:
             conditions.append(~Profile.positions.any(Positions.company_name.ilike(f"%{name}%")))
 
         query = query.where(and_(*conditions))
@@ -136,7 +130,7 @@ def get_connections(session: Session,
                 query = query.where(or_(*conditions))
     if exclude_school_name:
         conditions = []
-        for name in school_name:
+        for name in exclude_school_name:
             conditions.append(~Profile.education.any(Education.school_name.ilike(f"%{name}%")))
 
         query = query.where(and_(*conditions))
@@ -154,7 +148,7 @@ def get_connections(session: Session,
                 query = query.where(or_(*conditions))
     if exclude_degree:
         conditions = []
-        for deg in degree:
+        for deg in exclude_degree:
             conditions.append(~Profile.education.any(Education.degree.ilike(f"%{deg}%")))
 
         query = query.where(and_(*conditions))
@@ -174,7 +168,7 @@ def get_connections(session: Session,
                 query = query.where(or_(*conditions))
     if exclude_job_title:
         conditions = []
-        for title in job_title:
+        for title in exclude_job_title:
             conditions.append(~Profile.positions.any(Positions.title.ilike(f"%{title}%")))
 
         query = query.where(and_(*conditions))

@@ -1,3 +1,4 @@
+import copy
 from typing import TypedDict, Annotated, Literal, Optional
 
 from langchain_core.messages import SystemMessage, HumanMessage
@@ -105,12 +106,14 @@ Score each profile from 0.0 to 1.0:
 - 0.0-0.4 = Low relevance, minimal help
 
 # What makes a profile relevant?
-Consider:
-- Job title/role matches the query domain
-- Skills/expertise align with what the user is asking
-- Experience/industry is directly related
-- Location matters (if query is geography-specific)
-- Company/education background is pertinent
+Consider ONLY the following factors:
+    - Job title/role matches the query domain
+    - Skills/expertise align with what the user is asking
+    - Experience/industry is directly related
+    - Location matters (if query is geography-specific)
+    - Company/education background is pertinent
+
+Connection constraints should have much lower impact on relevance score than above mentioned factors
 
 # Guidelines
 - Be strict: only high scores (>0.7) for profiles that DIRECTLY help answer the question
@@ -127,13 +130,19 @@ Consider:
 
 # Output
 For each profile, provide:
-- linkedin_url: THE EXACT linkedin_url from input - copy it CHARACTER BY CHARACTER, including ALL numbers and dashes at the end. Do NOT shorten, normalize, or "fix" the URL.
+- id: THE EXACT id from input (DONT CHANGE).
 - relevance_score: float between 0.0 and 1.0
 - relevance_summary: brief explanation (1-2 sentences)
 
-CRITICAL RULE: The linkedin_url field MUST be an EXACT byte-for-byte copy from the input.
+CRITICAL RULE: The linkedin_url field MUST be an EXACT byte-for-byte copy from the input. JUST RETURN WHAT YOU HAD IN INPUT.
 Example CORRECT: https://www.linkedin.com/in/john-doe-123456789
 Example WRONG: https://www.linkedin.com/in/john-doe (missing numbers!)
+
+The network is constructed from linkedin combinations of 4 people (Petar, Mihajlo, Aleksandar and Jelena)
+Field owners in every profile indicates to which of those 4 people is the profile connected.
+If some of the 4 names are not in owners that means the profile is not connected to them.
+(example: user_question = "is there anyone connected to Petar and Mihajlo that works in Microsoft", if there are 2 profiles and both work in Microsoft,
+but one of them is connected only to Petar and other is connected to both Petar and Mihajlo, those profiles should have similar relevance score))
 """
 
 class Decision(BaseModel):
@@ -143,7 +152,7 @@ class Decision(BaseModel):
     switch_strategy_to: Literal["structured_filter", "semantic_search", "hybrid_search", "no_change"]
 
 class EvaluatedProf(BaseModel):
-    linkedin_url: str = Field(description="LinkedIn profile url as an unique identifier for the profile")
+    id: int = Field(description="Profile id (from the input).")
     relevance_score: float = Field(ge=0.0, le=1.0, description="Relevance score of the profile.")
     relevance_summary: str = Field(description="Short (1-2 sentence) summary of why the profile is relevant to the query.")
 
@@ -255,7 +264,13 @@ def reranking_node(state: RetrievalState) -> dict:
     return {"results": results}
 
 def relevance_evaluation(state: RetrievalState) -> dict:
-    results = state["results"]
+    results = copy.deepcopy(state["results"])
+
+    for i, r in enumerate(results):
+        r["id"] = i
+        r["name"] = "placeholder_name"
+        r["linkedin_url"] = "placeholder_linkedin_url"
+
     query_text = state["query_text"]
     evaluated = relevance_evaluator.invoke([
         SystemMessage(content=RELEVANCE_EVAL_PROMPT),
@@ -265,15 +280,15 @@ def relevance_evaluation(state: RetrievalState) -> dict:
         """)
     ])
 
-    results_by_url = {r["linkedin_url"]: r for r in results}
+    results_by_id = {r["id"]: r for r in results}
     enriched = [
         {
-            **results_by_url[ev.linkedin_url],
+            **state["results"][ev.id],
             "relevance_score": ev.relevance_score,
             "relevance_summary": ev.relevance_summary
         }
         for ev in evaluated.evaluated_results
-        # if ev.linkedin_url in results_by_url
+        if ev.id in results_by_id
     ]
 
     return {"results": enriched}

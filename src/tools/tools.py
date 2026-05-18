@@ -21,6 +21,7 @@ class Prof(TypedDict):
     name: str
     headline: str | None
     summary: str | None
+    skills: list[str] | None
     linkedin_url: str
     location: str | None
     current_company: str | None
@@ -37,9 +38,13 @@ def semantic_search(query: str, filters: dict = None, top_k: int = 10) -> list[P
     Returns a ranked list of relevant profiles with their owners.
     """
     owners = filters.get("owners", None)
+    owners_operator = filters.get("owners_operator", None)
     if owners:
         owners = [owner.capitalize() for owner in owners]
-        semantic_filters = {"owners": {"$in": owners}}
+        if owners_operator == "ANY":
+            semantic_filters = {"$or": [{"owners": {"$contains": owner}} for owner in owners]}
+        elif owners_operator == "ALL":
+            semantic_filters = {"$and": [{"owners": {"$contains": owner}} for owner in owners]}
     else:
         semantic_filters = None
     result = semantic_query(query, semantic_filters, top_k=top_k)
@@ -49,6 +54,7 @@ def semantic_search(query: str, filters: dict = None, top_k: int = 10) -> list[P
             "name": f"{metadata['first_name']} {metadata['last_name']}",
             "headline": metadata['headline'],
             "summary": metadata['summary'],
+            "skills": None,
             "linkedin_url": metadata['linkedin_url'],
             "location": None,
             "current_company": None,
@@ -136,6 +142,7 @@ def structured_filter(
                 "name": f"{r.first_name} {r.last_name}",
                 "headline": None,
                 "summary": None,
+                "skills": r.skills,
                 "linkedin_url": r.linkedin_url,
                 "location": f"{r.city}, {r.country}",
                 "current_company": current_company_name if current_company_name else None, # if any profile is fetched that means we found profile with this current position

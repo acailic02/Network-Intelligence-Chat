@@ -118,7 +118,7 @@ def synthesize(
     query: str,
     profiles: list[dict],
     conversation_history: list[dict] | None = None,
-) -> str:
+) -> tuple[str, list[dict]]:
     """
     Generates a natural language response based on retrieved profiles.
 
@@ -127,7 +127,8 @@ def synthesize(
     conversation_history: previous messages in the conversation (optional)
     """
     if not profiles:
-        return "No connections found matching your query. Try different keywords."
+        result = ("No connections found matching your query. Try different keywords.", [])
+        return result
 
     profiles_text = format_profiles_for_prompt(profiles)
 

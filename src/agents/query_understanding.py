@@ -163,7 +163,7 @@ class LookupAttributes(BaseModel):
     education: Optional[EducationFilters] = Field(default=None, description="Filters related to the person's educational background. If none of fields in class have value, set as None.")
     owner: Optional[List[Literal["Jelena", "Aleksandar", "Mihajlo", "Petar"]]] = Field(default=None,description="Explicit person names mentioned by the user whose connections to search through. Only real person names, never verbs or roles.")
     owner_operator: Optional[Literal["ANY", "ALL"]] = Field(default=None, description="How many owners does found connections have to satisfy. Possible values are ANY/ALL, if user didnt specify set as None. If user asked for connection that has connections with Jelena and Aleksandar, value is set as ALL.")
-    exc_owner: Optional[Literal["Jelena", "Aleksandar", "Mihajlo", "Petar"]] = Field(default=None, description="User explicitly DOES NOT want connections from these owners.")
+    exc_owner: Optional[List[Literal["Jelena", "Aleksandar", "Mihajlo", "Petar"]]] = Field(default=None, description="User explicitly DOES NOT want connections from these owners.")
 
 class UserQuery(BaseModel):
     lookup_filters: LookupAttributes = Field(description="Structured filters extracted from the user's query.")
