@@ -37,16 +37,19 @@ def semantic_search(query: str, filters: dict = None, top_k: int = 10) -> list[P
     Use this tool for fuzzy or conceptual queries that can't be looked up with structured SQL queries.
     Returns a ranked list of relevant profiles with their owners.
     """
-    owners = filters.get("owners", None)
-    owners_operator = filters.get("owners_operator", None)
-    if owners:
-        owners = [owner.capitalize() for owner in owners]
-        if owners_operator == "ANY":
-            semantic_filters = {"$or": [{"owners": {"$contains": owner}} for owner in owners]}
-        elif owners_operator == "ALL":
-            semantic_filters = {"$and": [{"owners": {"$contains": owner}} for owner in owners]}
-    else:
-        semantic_filters = None
+    semantic_filters = None
+    if filters:
+        owners = filters.get("owners", None)
+        owners_operator = filters.get("owners_operator", None)
+        if owners:
+            owners = [owner.capitalize() for owner in owners]
+            if len(owners) > 1:
+                if owners_operator == "ANY":
+                    semantic_filters = {"$or": [{"owners": {"$contains": owner}} for owner in owners]}
+                else:
+                    semantic_filters = {"$and": [{"owners": {"$contains": owner}} for owner in owners]}
+            else:
+                semantic_filters = {"owners": {"$contains": owners[0]}}
     result = semantic_query(query, semantic_filters, top_k=top_k)
 
     profiles = [
