@@ -1,4 +1,6 @@
 import copy
+import json
+import os
 from typing import TypedDict, Annotated, Literal, Optional
 
 from langchain_core.messages import SystemMessage, HumanMessage
@@ -9,6 +11,7 @@ from sentence_transformers import CrossEncoder
 from src.agents.query_understanding import UserQuery, LookupAttributes, QueryType
 from src.tools.tools import structured_filter, semantic_search, count_matches, hybrid_search, Prof
 from src.llm.client import get_llm
+from src.config import LOGS_DIR
 
 MAX_ATTEMPTS = 5
 
@@ -301,6 +304,21 @@ def final_profile_sorting(state: RetrievalState) -> dict:
     results = state["results"]
     return {"results": sorted(results, key=lambda x: x.get("relevance_score", 0.0), reverse=True)}
 
+def log_retrieval(state: RetrievalState) -> dict:
+    final_retrieval = {
+        "retrieval_type": state["retrieval_type"],
+        "filters": state["filters"],
+        "query_text": state["query_text"],
+        "user_input": state["user_input"],
+    }
+
+    os.makedirs(LOGS_DIR, exist_ok=True)
+    log_file = os.path.join(LOGS_DIR, "final_retrieval_per_query.jsonl")
+    with open(log_file, "a") as f:
+        f.write(json.dumps(final_retrieval) + "\n")
+
+    return {}
+
 
 graph = StateGraph(RetrievalState)
 graph.add_node("structured_retrieval", structured_retrieval)
@@ -312,6 +330,7 @@ graph.add_node("reranking_node", reranking_node)
 graph.add_node("relevance_evaluation", relevance_evaluation)
 graph.add_node("irrelevant_profiles_drop_off", irrelevant_profiles_drop_off)
 graph.add_node("final_profile_sorting", final_profile_sorting)
+graph.add_node("log_retrieval", log_retrieval)
 
 
 graph.add_conditional_edges(START, route_retrieval_type, {"structured_filter": "structured_retrieval", "semantic_search": "semantic_retrieval", "hybrid_search": "hybrid_retrieval"})
@@ -323,7 +342,8 @@ graph.add_conditional_edges("relaxation_node", route_retrieval_type, {"structure
 graph.add_edge("reranking_node", "relevance_evaluation")
 graph.add_edge("relevance_evaluation", "irrelevant_profiles_drop_off")
 graph.add_edge("irrelevant_profiles_drop_off", "final_profile_sorting")
-graph.add_edge("final_profile_sorting", END)
+graph.add_edge("final_profile_sorting", "log_retrieval")
+graph.add_edge("log_retrieval", END)
 
 retrieval_strategy = graph.compile()
 
