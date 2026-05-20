@@ -12,12 +12,13 @@ def build_network_intelligence_workflow():
     class WorkflowState(TypedDict):
         user_input: str
         query_understanding_state: UserQuery
+        conversation_history: list[dict]
         results: list[dict]
         answer: str
         profiles_data: list[dict]
 
     def query_understanding_node(state: WorkflowState) -> dict:
-        output = understand(state["user_input"])
+        output = understand(state["user_input"], state["conversation_history"])
         return {"query_understanding_state": output}
 
     def retrieval_strategy_node(state: WorkflowState) -> dict:
@@ -26,7 +27,7 @@ def build_network_intelligence_workflow():
 
     def synthesis_node(state: WorkflowState) -> dict:
         profiles = state["results"]
-        answer, profiles_data = synthesize(state["user_input"], profiles)
+        answer, profiles_data = synthesize(state["user_input"], profiles, state["conversation_history"])
         return {"answer": answer, "profiles_data": profiles_data}
 
 

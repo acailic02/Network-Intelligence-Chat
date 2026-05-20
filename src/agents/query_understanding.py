@@ -1,5 +1,6 @@
 from pydantic import BaseModel, Field
 from src.llm.client import parse
+import json
 from enum import Enum
 from typing import Optional, List, Literal
 
@@ -185,9 +186,20 @@ class UserQuery(BaseModel):
         - HYBRID: at least ONE LookupAttributes field IS populated AND contextual_need IS populated"""
     )
 
-def understand(user_input: str) -> UserQuery:
+def understand(user_input: str, conversation_history: list[dict] | None = None) -> UserQuery:
+    messages = []
+    if conversation_history:
+        for msg in conversation_history:
+            messages.append({"role": "user", "content": msg["user_msg"]})
+            
+            assistant_content = msg["system_res"]
+            if msg.get("query_parsed"):
+                assistant_content += f"\n\nQuery parsed:\n{msg['query_parsed']}"
+            messages.append({"role": "assistant", "content": assistant_content})
+    messages.append({"role": "user", "content": user_input})
+    
     return parse(
-        messages=[{"content": user_input}],
+        messages=messages,
         response_format=UserQuery,
         system=SYSTEM_PROMPT,
     )

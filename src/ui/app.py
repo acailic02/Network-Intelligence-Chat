@@ -1,6 +1,8 @@
 from flask import Flask, request, jsonify, render_template
 from sqlalchemy.orm import Session
 
+import json
+import os
 from src.agents.workflow import build_network_intelligence_workflow
 from src.llm.client import chat
 from src.storage.db import engine
@@ -8,6 +10,11 @@ from src.agents.query_understanding import understand
 
 app = Flask(__name__)
 workflow = build_network_intelligence_workflow()
+
+HISTORY_WINDOW = 10
+conversation_history = []
+
+query_log_path = os.path.join(os.path.dirname(__file__), "..", ".." , "logs", "final_retrieval_per_query.jsonl")
 
 @app.route("/")
 def index():
@@ -18,17 +25,27 @@ def systemRes():
     data = request.get_json()
     userMSG = data["message"]
 
-    #res = chat(
-    #    messages=[{"role": "user", "content": userMSG}],
-    #    system="You are assistent that helps in searching users LinkedIn network."
-    #)["text"]
+    result = workflow.invoke({
+        "user_input": userMSG,
+        "conversation_history": conversation_history
+    })
+    
+    last_query = None
+    with open(query_log_path, "r") as f:
+        for line in f:
+            last_line = line
+    last_query = json.dumps(json.loads(last_line))
 
-    #with Session(engine) as session:
-    #    query_res = get_connections(session, country=userMSG)
+    conversation_history.append({
+        "user_msg": userMSG,
+        "system_res": result["answer"],
+        "query_parsed": last_query
+    })
 
-    #profiles = [x.first_name + " " + x.last_name for x in query_res]
+    print(json.dumps(conversation_history, indent=2))
 
-    result = workflow.invoke({"user_input": userMSG})
+    if len(conversation_history) > HISTORY_WINDOW:
+        conversation_history.pop(0)
 
     return jsonify({
         "systemRes": result["answer"],

@@ -144,8 +144,9 @@ Strictly stick to the data in the profiles — do not invent anything that is no
 
     messages = []
     if conversation_history:
-        for msg in conversation_history[-4:]:
-            messages.append(msg)
+        for msg in conversation_history:
+            messages.append({"role": "user", "content": msg["user_msg"]})
+            messages.append({"role": "assistant", "content": msg["system_res"]})
     messages.append({"role": "user", "content": user_message})
 
     response = chat(
