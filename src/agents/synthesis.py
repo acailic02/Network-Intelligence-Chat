@@ -139,19 +139,24 @@ def synthesize(
         result = ("No connections found matching your query. Try different keywords.", [])
         return result
 
-    profiles_text = format_profiles_for_prompt(profiles[:5])
+    filtered_profiles = [p for p in profiles if p.get("relevance_score", 1.0) >= 0.4]
+
+    if not filtered_profiles:
+        return ("No sufficiently relevant connections found matching your query. Try different keywords.", [])
+
+    profiles_text = format_profiles_for_prompt(filtered_profiles[:5])
 
     user_message = f"""User query: {query}
 
-TOTAL relevant profiles found: {len(profiles)} (this is exact number)
-    
-TOP 5 best fitted profiles in the team's combined network:
+    TOTAL relevant profiles found: {len(filtered_profiles)} (this is exact number)
 
-{profiles_text}
+    TOP 5 best fitted profiles in the team's combined network:
 
-Based on these profiles, generate a concise strategic response following the format in your instructions.
-Do NOT list all profiles — only highlight the 2-4 strongest ones with HTML links.
-Strictly stick to the data in the profiles — do not invent anything that is not written above."""
+    {profiles_text}
+
+    Based on these profiles, generate a concise strategic response following the format in your instructions.
+    Do NOT list all profiles — only highlight the 2-4 strongest ones with HTML links.
+    Strictly stick to the data in the profiles — do not invent anything that is not written above."""
 
     messages = []
     if conversation_history:
@@ -165,4 +170,4 @@ Strictly stick to the data in the profiles — do not invent anything that is no
         system=SYNTHESIS_SYSTEM_PROMPT,
     )
 
-    return response["text"], profiles
+    return response["text"], filtered_profiles
