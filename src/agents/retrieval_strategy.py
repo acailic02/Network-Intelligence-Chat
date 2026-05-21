@@ -137,15 +137,138 @@ For each profile, provide:
 - relevance_score: float between 0.0 and 1.0
 - relevance_summary: brief explanation (1-2 sentences)
 
-CRITICAL RULE: The linkedin_url field MUST be an EXACT byte-for-byte copy from the input. JUST RETURN WHAT YOU HAD IN INPUT.
-Example CORRECT: https://www.linkedin.com/in/john-doe-123456789
-Example WRONG: https://www.linkedin.com/in/john-doe (missing numbers!)
+# Scoring formula
+For each profile:
+1. Identify all user constraints.
+2. Mark each constraint as critical, high, medium, or low based on the wording.
+3. Mark each constraint as satisfied, partially_satisfied, or missing using only profile data.
+4. Score by weighted coverage:
+   - critical = 3
+   - high = 2
+   - medium = 1
+   - low = 0.5
+   satisfied = full weight
+   partially_satisfied = half weight
+   missing = 0
+5. For AND-style queries, never score above 0.70 if any critical constraint is missing.
+6. For AND-style queries, never score above 0.85 unless all critical/high constraints are satisfied.
+7. For OR-style queries, a profile can score highly if it satisfies at least one major branch well.
 
-The network is constructed from linkedin combinations of 4 people (Petar, Mihajlo, Aleksandar and Jelena)
-Field owners in every profile indicates to which of those 4 people is the profile connected.
-If some of the 4 names are not in owners that means the profile is not connected to them.
-(example: user_question = "is there anyone connected to Petar and Mihajlo that works in Microsoft", if there are 2 profiles and both work in Microsoft,
-but one of them is connected only to Petar and other is connected to both Petar and Mihajlo, those profiles should have similar relevance score))
+# Examples by number of constraints
+
+## 2 constraints
+
+user_question: "Find connections working at Microsoft"
+profile: { current_company: "Microsoft", location: "Belgrade" }
+score: 0.95 | "Works at Microsoft, single constraint fully satisfied."
+
+profile: { current_company: "Google", positions: [{ company: "Microsoft" }] }
+score: 0.35 | "Previously at Microsoft but no longer there. Main constraint partially satisfied."
+
+profile: { current_company: "Amazon", location: "Belgrade" }
+score: 0.05 | "Never worked at Microsoft. Constraint not satisfied."
+
+---
+
+user_question: "Find QA engineers in our network"
+profile: { current_job_title: "QA Engineer", current_company: "Nordeus" }
+score: 0.95 | "QA Engineer title directly satisfies the role constraint."
+
+profile: { current_job_title: "QA Automation Engineer", skills: ["Selenium", "TestNG"] }
+score: 0.75 | "Automation variant of QA with relevant skills — intent matched."
+
+profile: { current_job_title: "Software Engineer", skills: ["testing", "Jest"] }
+score: 0.3 | "Testing skills present but no QA title — tangentially related."
+
+---
+
+## 3 constraints
+
+user_question: "Find data engineers from Croatia not Jelenas connections"
+profile: { current_job_title: "Data Engineer", location: "Zagreb, Croatia", owners: ["Petar"] }
+score: 0.9 | "Data Engineer from Croatia, not Jelena's connection. All three constraints satisfied."
+
+profile: { current_job_title: "Data Engineer", location: "Zagreb, Croatia", owners: ["Jelena"] }
+score: 0.8 | "Data Engineer from Croatia — two main constraints satisfied. Jelena ownership is minor negative."
+
+profile: { current_job_title: "Data Engineer", location: "Belgrade, Serbia", owners: ["Petar"] }
+score: 0.6 | "Data Engineer role satisfied but not from Croatia. Owner constraint satisfied. One significant miss."
+
+profile: { current_job_title: "Data Analyst", location: "Zagreb, Croatia", owners: ["Petar"] }
+score: 0.55 | "From Croatia, not Jelena's connection, but Data Analyst not Data Engineer — role is adjacent not exact."
+
+profile: { current_job_title: "Backend Engineer", location: "Belgrade, Serbia", owners: ["Jelena"] }
+score: 0.1 | "None of the three constraints satisfied."
+
+---
+
+user_question: "Find people working at Google and are not from Serbia"
+profile: { current_company: "Google", location: "Dublin, Ireland", education: [{ school: "Trinity College Dublin" }] }
+score: 0.95 | "Works at Google, Irish location and education confirm non-Serbian origin. Both constraints satisfied."
+
+profile: { current_company: "Google", location: "Belgrade, Serbia", education: [{ school: "University of Belgrade" }] }
+score: 0.45 | "Works at Google which is the primary constraint, but location and education both confirm Serbian origin. One of two constraints violated."
+
+profile: { current_company: "Google", location: "Zurich, Switzerland", education: [{ school: "University of Belgrade" }] }
+score: 0.7 | "Works at Google and lives in Switzerland, but Belgrade education is a soft signal of Serbian origin — nationality uncertain, main constraint satisfied."
+
+profile: { current_company: "Nordeus", location: "Dublin, Ireland" }
+score: 0.25 | "Not from Serbia satisfies nationality constraint but does not work at Google — primary constraint not satisfied."
+
+---
+
+## 4 constraints
+
+user_question: "Find backend engineers in London not at Amazon, not Jelenas connections"
+profile: { current_job_title: "Backend Engineer", location: "London, UK", current_company: "Spotify", owners: ["Petar"] }
+score: 0.95 | "Backend Engineer in London, not at Amazon, not Jelena's connection. All four constraints satisfied."
+
+profile: { current_job_title: "Backend Engineer", location: "London, UK", current_company: "Amazon", owners: ["Petar"] }
+score: 0.65 | "Backend Engineer in London, not Jelena's — three of four satisfied. Works at Amazon which violates company exclusion."
+
+profile: { current_job_title: "Backend Engineer", location: "London, UK", current_company: "Spotify", owners: ["Jelena"] }
+score: 0.85 | "Backend Engineer in London, not at Amazon — three of four satisfied. Jelena ownership is minor negative."
+
+profile: { current_job_title: "Backend Engineer", location: "Berlin, Germany", current_company: "Amazon", owners: ["Jelena"] }
+score: 0.25 | "Role constraint satisfied but wrong city, wrong company, and Jelena connection — three of four violated."
+
+profile: { current_job_title: "Frontend Engineer", location: "Berlin, Germany", current_company: "Amazon", owners: ["Jelena"] }
+score: 0.05 | "None of the four constraints satisfied."
+
+---
+
+user_question: "Find people from Novi Sad who worked at Levi9 and know Python, connected to Aleksandar"
+profile: { location: "Novi Sad", positions: [{ company: "Levi9" }], skills: ["Python", "Django"], owners: ["Aleksandar"] }
+score: 0.95 | "From Novi Sad, Levi9 experience, Python skills, Aleksandar's connection. All four satisfied."
+
+profile: { location: "Novi Sad", positions: [{ company: "Levi9" }], skills: ["Java", "Spring"], owners: ["Aleksandar"] }
+score: 0.7 | "Novi Sad, Levi9, Aleksandar's connection satisfied — but no Python skills. Three of four constraints met."
+
+profile: { location: "Belgrade", positions: [{ company: "Levi9" }], skills: ["Python"], owners: ["Aleksandar"] }
+score: 0.65 | "Levi9 experience, Python, Aleksandar's connection — but from Belgrade not Novi Sad. Three of four satisfied."
+
+profile: { location: "Novi Sad", positions: [{ company: "Nordeus" }], skills: ["Python"], owners: ["Mihajlo"] }
+score: 0.35 | "From Novi Sad and knows Python, but no Levi9 experience and not Aleksandar's connection. Two of four satisfied."
+
+profile: { location: "Belgrade", positions: [{ company: "Nordeus" }], skills: ["Java"], owners: ["Jelena"] }
+score: 0.05 | "None of the four constraints satisfied."
+
+---
+
+## Past experience vs current (special case)
+
+user_question: "Find people who worked at Nutanix and FIS"
+profile: { positions: [{ company: "Nutanix" }, { company: "FIS" }], current_company: "Google" }
+score: 0.95 | "Has experience at both Nutanix and FIS — AND constraint fully satisfied regardless of current employer."
+
+profile: { positions: [{ company: "Nutanix" }], current_company: "FIS" }
+score: 0.95 | "Nutanix in past experience, currently at FIS — both companies present, AND satisfied."
+
+profile: { positions: [{ company: "Nutanix" }], current_company: "Google" }
+score: 0.3 | "Only Nutanix found, FIS missing entirely. AND constraint requires both companies."
+
+profile: { current_company: "Nutanix", positions: [{ company: "IBM" }] }
+score: 0.3 | "Currently at Nutanix but no FIS experience. AND constraint not satisfied."
 """
 
 class Decision(BaseModel):
@@ -154,11 +277,17 @@ class Decision(BaseModel):
     drop_filters: list[str] = Field(description="Filters that were dropped due to the reasoning both in this iteration and earlier ones. Use only when action is 'relax'.")
     switch_strategy_to: Literal["structured_filter", "semantic_search", "hybrid_search", "no_change"]
 
+class ConstraintScore(BaseModel):
+    constraint: str
+    importance: Literal["critical", "high", "medium", "low"]
+    match: Literal["satisfied", "partial", "missing"]
+    evidence: str | None
+
 class EvaluatedProf(BaseModel):
     id: int = Field(description="Profile id (from the input).")
     relevance_score: float = Field(ge=0.0, le=1.0, description="Relevance score of the profile.")
     relevance_summary: str = Field(description="Short (1-2 sentence) summary of why the profile is relevant to the query.")
-
+    constraint_scores: list[ConstraintScore]
 
 class RelevanceEvaluation(BaseModel):
     evaluated_results: list[EvaluatedProf]
@@ -271,8 +400,8 @@ def relevance_evaluation(state: RetrievalState) -> dict:
 
     for i, r in enumerate(results):
         r["id"] = i
-        r["name"] = "placeholder_name"
-        r["linkedin_url"] = "placeholder_linkedin_url"
+        r["name"] = f"placeholder_name_{i}"
+        r["linkedin_url"] = f"placeholder_linkedin_url_{i}"
 
     query_text = state["query_text"]
     evaluated = relevance_evaluator.invoke([

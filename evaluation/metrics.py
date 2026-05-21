@@ -1,6 +1,8 @@
 import json
+import os
 from pathlib import Path
 
+logs_path: str = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../logs/llm_calls.jsonl")
 
 def query_type_accuracy(results: list[dict]) -> dict:
     total = len(results)
@@ -63,7 +65,7 @@ def false_positive_rate(results: list[dict]) -> dict:
     }
 
 
-def avg_latency(logs_path: str = "logs/llm_calls.jsonl") -> dict:
+def avg_latency(logs_path) -> dict:
     path = Path(logs_path)
     if not path.exists():
         return {"avg_latency_s": None, "p95_latency_s": None}

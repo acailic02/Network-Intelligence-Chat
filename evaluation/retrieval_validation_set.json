@@ -1,0 +1,440 @@
+[
+  {
+    "id": "1",
+    "query_type": "LOOKUP",
+    "user_input": "Give me all connections from Berlin",
+    "relevant_ids": [
+      "https://www.linkedin.com/in/tom-luedersdorf",
+      "https://www.linkedin.com/in/eugen-resch-founderinvest",
+      "https://www.linkedin.com/in/timq",
+      "https://www.linkedin.com/in/mianastic",
+      "https://www.linkedin.com/in/at%C4%B1l%C4%B1m-oe-zel66",
+      "https://www.linkedin.com/in/ivana-curic",
+      "https://www.linkedin.com/in/nikola-mataruga-424897120",
+      "https://www.linkedin.com/in/miloszivanovic",
+      "https://www.linkedin.com/in/fabiodandreagiovanni",
+      "https://www.linkedin.com/in/milosdjuric",
+      "https://www.linkedin.com/in/dragan-%C4%8De%C4%8Davac-04480ab8",
+      "https://www.linkedin.com/in/milakovicmilos",
+      "https://www.linkedin.com/in/gerawork"
+    ]
+  },
+  {
+    "id": "2",
+    "query_type": "LOOKUP",
+    "user_input": "What connections do we have in Italy",
+    "relevant_ids": [
+      "https://www.linkedin.com/in/chiara-stramaccioni-855316142",
+      "https://www.linkedin.com/in/gianfranco-mancuso-87214b7",
+      "https://www.linkedin.com/in/alinalandau",
+      "https://www.linkedin.com/in/alessio-martini-ph-d-6a84793a",
+      "https://www.linkedin.com/in/vittorio-vinozza-2b263772",
+      "https://www.linkedin.com/in/giuseppe-ciaburro-phd-a48795b9",
+      "https://www.linkedin.com/in/giovanni-ferrari-212945b1",
+      "https://www.linkedin.com/in/carlo-de-pietro-44a7b836",
+      "https://www.linkedin.com/in/franco-malgarini-29b875138",
+      "https://www.linkedin.com/in/gabriele-grandi-962a94107",
+      "https://www.linkedin.com/in/pierfrancesco-lombardo-8752ab40",
+      "https://www.linkedin.com/in/pierluigi-siano-b3417915",
+      "https://www.linkedin.com/in/visic"
+    ]
+  },
+  {
+    "id": "3",
+    "query_type": "LOOKUP",
+    "user_input": "Connections working as Data Engineer",
+    "relevant_ids": [
+      "https://www.linkedin.com/in/petar-djordjevic",
+      "https://www.linkedin.com/in/petar-djordjevic",
+      "https://www.linkedin.com/in/uro%C5%A1-iveti%C4%87",
+      "https://www.linkedin.com/in/ali-rizvi-839a76214",
+      "https://www.linkedin.com/in/aleksa-vukadinovic",
+      "https://www.linkedin.com/in/mima-grujic",
+      "https://www.linkedin.com/in/ivan-lazarevic",
+      "https://www.linkedin.com/in/erichansander",
+      "https://www.linkedin.com/in/mick-nikolic",
+      "https://www.linkedin.com/in/oliverpopovic89",
+      "https://www.linkedin.com/in/dragana-dumic-8600871b8",
+      "https://www.linkedin.com/in/denisbykov",
+      "https://www.linkedin.com/in/mina-kuzmi%C4%87-837525197",
+      "https://www.linkedin.com/in/filip-ilic-964147172",
+      "https://www.linkedin.com/in/nelarandjelovic",
+      "https://www.linkedin.com/in/nelarandjelovic",
+      "https://www.linkedin.com/in/nelarandjelovic",
+      "https://www.linkedin.com/in/nelarandjelovic",
+      "https://www.linkedin.com/in/iva-citlucanin-a21595234",
+      "https://www.linkedin.com/in/iva-citlucanin-a21595234",
+      "https://www.linkedin.com/in/pau-labarta-bajo-4432074b",
+      "https://www.linkedin.com/in/michiel%7Evictor",
+      "https://www.linkedin.com/in/michiel%7Evictor",
+      "https://www.linkedin.com/in/michiel%7Evictor",
+      "https://www.linkedin.com/in/jelena-jovovic-442746180",
+      "https://www.linkedin.com/in/jelena-jovovic-442746180",
+      "https://www.linkedin.com/in/jelena-jovovic-442746180",
+      "https://www.linkedin.com/in/muzinga-tshilombo",
+      "https://www.linkedin.com/in/sumit-dutta-47329213",
+      "https://www.linkedin.com/in/%D0%B1%D0%BE%D0%B3%D0%B4%D0%B0%D0%BD-%D0%BD-688a2632"
+    ]
+  },
+  {
+    "id": "4",
+    "query_type": "LOOKUP",
+    "user_input": "What connections work for Wargaming?",
+    "relevant_ids": [
+      "https://www.linkedin.com/in/ognjenmaksimovic",
+      "https://www.linkedin.com/in/jana-dragovic"
+    ]
+  },
+  {
+    "id": "5",
+    "query_type": "LOOKUP",
+    "user_input": "People working as data engineer that is not Jelenas in connections",
+    "relevant_ids": [
+      "https://www.linkedin.com/in/uro%C5%A1-iveti%C4%87"
+    ]
+  },
+  {
+    "id": "6",
+    "query_type": "LOOKUP",
+    "user_input": "Give me all teaching assistants that are not profesors from MATF, that are not Jelenas connections",
+    "relevant_ids": [
+      "https://www.linkedin.com/in/ivan-ristovic",
+      "https://www.linkedin.com/in/jelenatasic"
+    ]
+  },
+  {
+    "id": "7",
+    "query_type": "LOOKUP",
+    "user_input": "I need someone that worked at Nutanix and Fis",
+    "relevant_ids": [
+      "https://www.linkedin.com/in/aleksa-t-4532a6b7",
+      "https://www.linkedin.com/in/gavrilovmilos",
+      "https://www.linkedin.com/in/msosic",
+      "https://www.linkedin.com/in/tanjamladenovic"
+    ]
+  },
+  {
+    "id": "8",
+    "query_type": "LOOKUP",
+    "user_input": "Who works in synechron or in rivian that are in connection with Aleksandar or Mihajlo, not in connection with Jelena",
+    "relevant_ids": [
+      "https://www.linkedin.com/in/dunja-pi%C5%A1tevi%C4%87111",
+      "https://www.linkedin.com/in/jelenakovac",
+      "https://www.linkedin.com/in/ma%C5%A1a-mirilovi%C4%87-728535221"
+    ]
+  },
+  {
+    "id": "9",
+    "query_type": "LOOKUP",
+    "user_input": "People that work in Google and are not from Serbia",
+    "relevant_ids": [
+      "https://www.linkedin.com/in/%F0%9D%95%84%F0%9D%95%92%F0%9D%95%A3%F0%9D%95%94%F0%9D%95%96%F0%9D%95%9D%F0%9D%95%A0-%F0%9D%94%BD%F0%9D%95%96%F0%9D%95%A3%F0%9D%95%A3%F0%9D%95%96%F0%9D%95%9A%F0%9D%95%A3%F0%9D%95%92-%F0%9D%95%95%F0%9D%95%92-%F0%9D%95%8A%F0%9D%95%9A%F0%9D%95%9D%F0%9D%95%A7%F0%9D%95%92-69ba82142",
+      "https://www.linkedin.com/in/aidazolic",
+      "https://www.linkedin.com/in/aniket-prabhune-7b55022",
+      "https://www.linkedin.com/in/branislavaivkovic",
+      "https://www.linkedin.com/in/dejana-antic-124062172",
+      "https://www.linkedin.com/in/galadrielle-heinrich-mba",
+      "https://www.linkedin.com/in/juliagilinets",
+      "https://www.linkedin.com/in/markoljucovic",
+      "https://www.linkedin.com/in/michaeldjoy",
+      "https://www.linkedin.com/in/mila-lukic",
+      "https://www.linkedin.com/in/milica-s-79358a49",
+      "https://www.linkedin.com/in/petarvelickovic"
+    ]
+  },
+  {
+    "id": "10",
+    "query_type": "LOOKUP",
+    "user_input": "Who in our connections is from Serbia but not from Belgrade, not Jelenas connection",
+    "relevant_ids": [
+      "https://www.linkedin.com/in/nikola-%C5%BEivkovi%C4%87-b4498a337"
+    ]
+  },
+  {
+    "id": "11",
+    "query_type": "LOOKUP",
+    "user_input": "Find me people who had or have word data in their job title and work in company in Novi Sad",
+    "relevant_ids": [
+      "https://www.linkedin.com/in/aleksandar-anti%C4%87-530632101",
+      "https://www.linkedin.com/in/ivan-protic-adms92us",
+      "https://www.linkedin.com/in/pavlovic%7Emilica",
+      "https://www.linkedin.com/in/zdenkogalic97"
+    ]
+  },
+  {
+    "id": "12",
+    "query_type": "LOOKUP",
+    "user_input": "Find me people who never had word data in their job title, know SQL, are from Croatia and are not from Zagreb",
+    "relevant_ids": [
+      "https://www.linkedin.com/in/nino-pozar"
+    ]
+  },
+  {
+    "id": "13",
+    "query_type": "LOOKUP",
+    "user_input": "Find me people from Belgrade that worked in sum or epam",
+    "relevant_ids": [
+      "https://www.linkedin.com/in/aleksandar-mladenovic",
+      "https://www.linkedin.com/in/biljana-jovanovic",
+      "https://www.linkedin.com/in/djordje-jovanovi%C4%87-522a55301",
+      "https://www.linkedin.com/in/djurdjija-marjanovic",
+      "https://www.linkedin.com/in/dragana-peri%C4%87-28a49025b",
+      "https://www.linkedin.com/in/iva-citlucanin-a21595234",
+      "https://www.linkedin.com/in/jjoksimovic",
+      "https://www.linkedin.com/in/julijana-marinkovi%C4%87-636270291",
+      "https://www.linkedin.com/in/kovmil",
+      "https://www.linkedin.com/in/lazar-jovanovic-527321246",
+      "https://www.linkedin.com/in/lazar-savic",
+      "https://www.linkedin.com/in/lazar-sto%C5%A1i%C4%87",
+      "https://www.linkedin.com/in/luka-djekic",
+      "https://www.linkedin.com/in/marijamarkovic15",
+      "https://www.linkedin.com/in/milan-mitreski",
+      "https://www.linkedin.com/in/milena-mirkovic-6a0630234",
+      "https://www.linkedin.com/in/ognjen-te%C5%A1i%C4%87-8649891b7",
+      "https://www.linkedin.com/in/ognjenvuceljic",
+      "https://www.linkedin.com/in/sarakabic",
+      "https://www.linkedin.com/in/sofija-janevska",
+      "https://www.linkedin.com/in/ssergienko",
+      "https://www.linkedin.com/in/stefan-malbasic",
+      "https://www.linkedin.com/in/tea-korelec-5315412a6",
+      "https://www.linkedin.com/in/tijana-zecevic",
+      "https://www.linkedin.com/in/vasilije-ivanovic"
+    ]
+  },
+  {
+    "id": "14",
+    "query_type": "LOOKUP",
+    "user_input": "I need connections that are not from Belgrade and do not work in Microsoft, dont include Jelenas connections",
+    "relevant_ids": [
+      "https://www.linkedin.com/in/danijeltrifunovic",
+      "https://www.linkedin.com/in/nikola-%C5%BEivkovi%C4%87-b4498a337",
+      "https://www.linkedin.com/in/striantou"
+    ]
+  },
+  {
+    "id": "15",
+    "query_type": "LOOKUP",
+    "user_input": "Give me poeple who worked at sum and argo and are not jelenas connections",
+    "relevant_ids": [
+      "https://www.linkedin.com/in/djordje-jovanovi%C4%87-522a55301",
+      "https://www.linkedin.com/in/lazar-sto%C5%A1i%C4%87"
+    ]
+  },
+  {
+    "id": "16",
+    "query_type": "DISCOVERY",
+    "user_input": "give me people in game dev that are not aleksandars connections",
+    "relevant_ids": [
+      "https://www.linkedin.com/in/vladimir-peri%C4%87-6b483583",
+      "https://www.linkedin.com/in/dimovicdj",
+      "https://www.linkedin.com/in/predrag-mitic-353019188",
+      "https://www.linkedin.com/in/darinkazobenica",
+      "https://www.linkedin.com/in/mladendulanovic",
+      "https://www.linkedin.com/in/ivan-merdovic-568aaa78",
+      "https://www.linkedin.com/in/stefan-golubovic-8989331a3",
+      "https://www.linkedin.com/in/nsajkas",
+      "https://www.linkedin.com/in/vukan-antic",
+      "https://www.linkedin.com/in/markokrmpoticdarkwing",
+      "https://www.linkedin.com/in/aleksa-stefanovic-",
+      "https://www.linkedin.com/in/veselinreljic",
+      "https://www.linkedin.com/in/kristina-petrovic-182820167",
+      "https://www.linkedin.com/in/marko-jevremovic-6b77471a",
+      "https://www.linkedin.com/in/milosdjuric",
+      "https://www.linkedin.com/in/kmilic"
+    ]
+  },
+  {
+    "id": "17",
+    "query_type": "HYBRID",
+    "user_input": "people who work or have worked in google deep mind with llms",
+    "relevant_ids": [
+      "https://www.linkedin.com/in/petarvelickovic",
+      "https://www.linkedin.com/in/aleksagordic"
+    ]
+  },
+  {
+    "id": "18",
+    "query_type": "SEMANTIC",
+    "user_input": "Who can help me build a rocket?",
+    "relevant_ids": []
+  },
+  {
+    "id": "19",
+    "query_type": "SEMANTIC",
+    "user_input": "im wondering who can introduce me to new job opportunities in data science in our team network",
+    "relevant_ids": [
+      "https://www.linkedin.com/in/elena-yankovskaya-hr",
+      "https://www.linkedin.com/in/zach-hallett",
+      "https://www.linkedin.com/in/minakovandzic",
+      "https://www.linkedin.com/in/vildana-bakarevic-15b92b111",
+      "https://www.linkedin.com/in/teodora-korovljev-107b2b170",
+      "https://www.linkedin.com/in/ykopotilov"
+    ]
+  },
+  {
+    "id": "20",
+    "query_type": "SEMANTIC",
+    "user_input": "I’m interested in founding a startup focused on developing AI solutions for banks and financial institutions. Who in our network would make the strongest founding team for this type of company?",
+    "relevant_ids": [
+      "https://www.linkedin.com/in/matteo-sorci-83b752",
+      "https://www.linkedin.com/in/chen-markman-7071a0104",
+      "https://www.linkedin.com/in/jovan-stojanovic-artificial-intelligence",
+      "https://www.linkedin.com/in/zarnoevic",
+      "https://www.linkedin.com/in/nmilojevic",
+      "https://www.linkedin.com/in/milosmihajlovic",
+      "https://www.linkedin.com/in/dstrbad"
+    ]
+  },
+  {
+    "id": "21",
+    "query_type": "SEMANTIC",
+    "user_input": "I’m interested in founding a startup focused on developing AI solutions for banks and financial institutions. Who in our network would make the strongest founding team for this type of company?",
+    "relevant_ids": [
+      "https://www.linkedin.com/in/matteo-sorci-83b752",
+      "https://www.linkedin.com/in/chen-markman-7071a0104",
+      "https://www.linkedin.com/in/jovan-stojanovic-artificial-intelligence",
+      "https://www.linkedin.com/in/zarnoevic",
+      "https://www.linkedin.com/in/nmilojevic",
+      "https://www.linkedin.com/in/milosmihajlovic",
+      "https://www.linkedin.com/in/dstrbad"
+    ]
+  },
+  {
+    "id": "22",
+    "query_type": "SEMANTIC",
+    "user_input": "Give me connections that would be good candidate for Master Chef Serbia",
+    "relevant_ids": [
+      "https://www.linkedin.com/in/lezajaj"
+    ]
+  },
+  {
+    "id": "23",
+    "query_type": "SEMANTIC",
+    "user_input": "I need character design for my new game",
+    "relevant_ids": [
+      "https://www.linkedin.com/in/aleksandra-stojanovic-",
+      "https://www.linkedin.com/in/vladimir-perić-6b483583",
+      "https://www.linkedin.com/in/vuk-kremić-4359a0141",
+      "https://www.linkedin.com/in/nsajkas"
+    ]
+  },
+  {
+    "id": "24",
+    "query_type": "HYBRID",
+    "user_input": "We're expanding to the US market — who can open doors for partnerships or first clients?",
+    "relevant_ids": [
+      "https://www.linkedin.com/in/konrad-kucharski-18140065",
+      "https://www.linkedin.com/in/jason-flack",
+      "https://www.linkedin.com/in/jamestobyne",
+      "https://www.linkedin.com/in/kevinbdew",
+      "https://www.linkedin.com/in/juliagilinets",
+      "https://www.linkedin.com/in/vedrasic",
+      "https://www.linkedin.com/in/phillip-m-taylor",
+      "https://www.linkedin.com/in/aaron-brady123",
+      "https://www.linkedin.com/in/andrewlamb2007",
+      "https://www.linkedin.com/in/vedran-glogovic",
+      "https://www.linkedin.com/in/iamivanostapenko",
+      "https://www.linkedin.com/in/jake-r-804b72191",
+      "https://www.linkedin.com/in/colinzealear",
+      "https://www.linkedin.com/in/devin-noonan-2aa679167",
+      "https://www.linkedin.com/in/anthonyfcastellanos",
+      "https://www.linkedin.com/in/julian-vega-cipm-9b118115a",
+      "https://www.linkedin.com/in/ali-rizvi-839a76214",
+      "https://www.linkedin.com/in/david-zahner",
+      "https://www.linkedin.com/in/evermes",
+      "https://www.linkedin.com/in/dberkowitz",
+      "https://www.linkedin.com/in/omar-agha-86104512b",
+      "https://www.linkedin.com/in/jasoeric",
+      "https://www.linkedin.com/in/aaronarmstrongsanmateo",
+      "https://www.linkedin.com/in/stefanie-logan",
+      "https://www.linkedin.com/in/amirashkenazi",
+      "https://www.linkedin.com/in/evankrakauer",
+      "https://www.linkedin.com/in/nikola-sladakovic-8ba46a1",
+      "https://www.linkedin.com/in/iddoavneri"
+    ]
+  },
+  {
+    "id": "25",
+    "query_type": "SEMANTIC",
+    "user_input": "I want to develop an LLM capable of analyzing genomic data to identify a patient's genetic predispositions to specific health conditions.",
+    "relevant_ids": [
+      "https://www.linkedin.com/in/milosnikolic85",
+      "https://www.linkedin.com/in/vuk-radovic-523444a",
+      "https://www.linkedin.com/in/nikis14",
+      "https://www.linkedin.com/in/milena-sosic"
+    ]
+  },
+  {
+    "id": "26",
+    "query_type": "SEMANTIC",
+    "user_input": "Who works at a company that does B2B SaaS",
+    "relevant_ids": [
+      "https://www.linkedin.com/in/milosnikolic85",
+      "https://www.linkedin.com/in/vuk-radovic-523444a",
+      "https://www.linkedin.com/in/nikis14",
+      "https://www.linkedin.com/in/milena-sosic"
+    ]
+  },
+  {
+    "id": "27",
+    "query_type": "SEMANTIC",
+    "user_input": "Who works at a company that does B2B SaaS",
+    "relevant_ids": [
+       "https://www.linkedin.com/in/andystinnes",
+       "https://www.linkedin.com/in/marko-dvojakovic",
+       "https://www.linkedin.com/in/vitomirrasic",
+       "https://www.linkedin.com/in/colinzealear",
+       "https://www.linkedin.com/in/timq",
+       "https://www.linkedin.com/in/vedrasic",
+       "https://www.linkedin.com/in/urosrogan",
+       "https://www.linkedin.com/in/anthonyfcastellanos",
+       "https://www.linkedin.com/in/sladjana-stoponja",
+       "https://www.linkedin.com/in/drazen-pejnovic"
+    ]
+  },
+  {
+    "id": "28",
+    "query_type": "SEMANTIC",
+    "user_input": "who in our network is most likely to cure cancer",
+    "relevant_ids": [
+       "https://www.linkedin.com/in/stefan-milosevic-1034b21a3",
+       "https://www.linkedin.com/in/milosnikolic85",
+       "https://www.linkedin.com/in/hamza-iseric",
+       "https://www.linkedin.com/in/branimir-ljubic-6963a0189"
+    ]
+  },
+  {
+    "id": "29",
+    "query_type": "HYBRID",
+    "user_input": "Who is working on MATF and is associated with gambling",
+    "relevant_ids": [
+      "https://www.linkedin.com/in/predrag-mitic-353019188",
+      "https://www.linkedin.com/in/markosinho",
+      "https://www.linkedin.com/in/petar-kulezić-375949155",
+      "https://www.linkedin.com/in/kristina-petrovic-182820167",
+      "https://www.linkedin.com/in/sonja-sinobad-021142208",
+      "https://www.linkedin.com/in/igor-nikolic-354035381",
+      "https://www.linkedin.com/in/kmilic",
+      "https://www.linkedin.com/in/ivan-merdovic-568aaa78",
+      "https://www.linkedin.com/in/veselinreljic",
+      "https://www.linkedin.com/in/lazarzivkovic23",
+      "https://www.linkedin.com/in/predrag-kurtic-057917227"
+    ]
+  },
+  {
+    "id": "30",
+    "query_type": "SEMANTIC",
+    "user_input": "Who has experience in both finance and technology?",
+    "relevant_ids": [
+      "https://www.linkedin.com/in/zarnoevic",
+      "https://www.linkedin.com/in/milan-dimitrijevic",
+      "https://www.linkedin.com/in/tomsic"
+    ]
+  }
+]
+
+
+
+
+
+

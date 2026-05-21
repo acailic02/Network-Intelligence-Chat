@@ -40,6 +40,7 @@ def semantic_search(query: str, filters: dict = None, top_k: int = 10) -> list[P
     semantic_filters = None
     if filters:
         owners = filters.get("owners", None)
+        exclude_owners = filters.get("exclude_owners", None)
         owners_operator = filters.get("owners_operator", None)
         if owners:
             owners = [owner.capitalize() for owner in owners]
@@ -50,6 +51,12 @@ def semantic_search(query: str, filters: dict = None, top_k: int = 10) -> list[P
                     semantic_filters = {"$and": [{"owners": {"$contains": owner}} for owner in owners]}
             else:
                 semantic_filters = {"owners": {"$contains": owners[0]}}
+        elif exclude_owners:
+            exclude_owners = [owner.capitalize() for owner in exclude_owners]
+            if len(exclude_owners) > 1:
+                semantic_filters = {"$and": [{"owners": {"$not_contains": owner}} for owner in exclude_owners]}
+            else:
+                semantic_filters = {"owners": {"$not_contains": exclude_owners[0]}}
     result = semantic_query(query, semantic_filters, top_k=top_k)
 
     profiles = [
