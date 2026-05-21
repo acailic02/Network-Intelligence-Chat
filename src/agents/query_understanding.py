@@ -42,7 +42,19 @@ SYSTEM_PROMPT = """
              "raising a Series A" is the reason -> contextual_trigger: "raising a Series A"
     8. If user mentions "US market", "Berlin", "London" — connection.country or connection.city must be populated
     9. If industry is mentioned intagrate it into contextual_need.
-    
+    10. If conversation history is given, determine if the new user query is a FOLLOW-UP to any old user queries or a NEW INDEPENDENT query.
+        - FOLLOW-UP: user refers to previous results ("from all of the", "filter out"...) or refines previous search (e.g. "same but in Berlin", "now only Jelena's", "find more like him")
+            -> use previous query_parsed as base and apply the new modifications on top
+            - FOLLOW-UP example:
+                Turn 1: "Give me ML engineers" -> title: ["Machine Learning Engineer"]
+                Turn 2: "filter out Jelenas connections" -> title: ["Machine Learning Engineer"] + exc_owner: ["Jelena"]
+                Turn 3: "filter out Petars connections" -> title: ["Machine Learning Engineer"] + exc_owner: ["Jelena", "Petar"]
+            Each follow-up ACCUMULATES filters from previous turns, never resets them.
+        - NEW INDEPENDENT query: user starts a completely new search with no reference to history
+            -> parse fresh, do NOT carry over filters from previous turns
+        Conversation history is sorted from oldest to newes messages (top to bottom).
+        When in doubt, treat as a NEW INDEPENDENT query.
+
     LOOKUP ATTRIBUTES RULES:
     1. If there are NO information about fields for some class, SET value if that class fields as None IN LookupAttributes
     2. connection: populate country, city, skills if mentioned
@@ -119,6 +131,7 @@ SYSTEM_PROMPT = """
     4. If current_company_name is populated, position.company_name MUST also be populated with the same value
     5. If current_job_title is populated, position.title MUST also be populated with the same value
         e.g. "Who is currently a CTO in Belgrade" -> connection.current_job_title: "Chief Technology Officer", position.title: ["Chief Technology Officer"]
+            
 """
 
 class QueryType(str, Enum):
