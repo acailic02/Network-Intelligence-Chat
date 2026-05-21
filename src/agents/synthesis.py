@@ -29,6 +29,14 @@ CRITICAL RULES — must be strictly followed:
 
 5. TRANSPARENCY: If the system did not find everything the user asked for, explicitly state what is missing.
 
+6. CONVERSATION HISTORY: If conversation history is given, determine if the new user query is a FOLLOW-UP to any old user queries or a NEW INDEPENDENT query.
+   - FOLLOW-UP: user refines ("from all of the", "filter out"...) or filters previous results (e.g. "filter out Jelena's", "show me more", "now only from Berlin")
+     -> acknowledge the refinement in your response, reference previous context naturally
+   - NEW INDEPENDENT query: user starts a completely new search with no reference to history
+     -> treat as fresh, do not reference previous results
+   Conversation history is sorted from oldest to newes messages (top to bottom).
+   When in doubt, treat as a NEW INDEPENDENT query.
+
 RESPONSE FORMAT — follow this exactly:
 - Start with one sentence stating the total number of relevant profiles found
 - Then write ONLY a strategic recommendation: who are the strongest 2-4 connections and why
@@ -36,6 +44,7 @@ RESPONSE FORMAT — follow this exactly:
 - Do NOT list all profiles one by one with details — those are shown separately below the response
 - Keep the response concise — 3-5 sentences maximum
 - End with a "Missing:" section only if something was clearly not found
+
 """
 
 
@@ -130,17 +139,24 @@ def synthesize(
         result = ("No connections found matching your query. Try different keywords.", [])
         return result
 
-    profiles_text = format_profiles_for_prompt(profiles)
+    filtered_profiles = [p for p in profiles if p.get("relevance_score", 1.0) >= 0.4]
+
+    if not filtered_profiles:
+        return ("No sufficiently relevant connections found matching your query. Try different keywords.", [])
+
+    profiles_text = format_profiles_for_prompt(filtered_profiles[:5])
 
     user_message = f"""User query: {query}
 
-Profiles found in the team's combined network:
+    TOTAL relevant profiles found: {len(filtered_profiles)} (this is exact number)
 
-{profiles_text}
+    TOP 5 best fitted profiles in the team's combined network:
 
-Based on these profiles, generate a concise strategic response following the format in your instructions.
-Do NOT list all profiles — only highlight the 2-4 strongest ones with HTML links.
-Strictly stick to the data in the profiles — do not invent anything that is not written above."""
+    {profiles_text}
+
+    Based on these profiles, generate a concise strategic response following the format in your instructions.
+    Do NOT list all profiles — only highlight the 2-4 strongest ones with HTML links.
+    Strictly stick to the data in the profiles — do not invent anything that is not written above."""
 
     messages = []
     if conversation_history:
@@ -154,4 +170,4 @@ Strictly stick to the data in the profiles — do not invent anything that is no
         system=SYNTHESIS_SYSTEM_PROMPT,
     )
 
-    return response["text"], profiles
+    return response["text"], filtered_profiles
