@@ -37,14 +37,47 @@ COMMON_JUDGE_CONTEXT = """
 You are judging the output of the synthesis agent in a LinkedIn network search
 assistant.
 
+Important product context:
+- The UI always shows the full retrieved profile list separately in an expander.
+- The final answer is only a concise summary/recommendation above that list.
+- Do not penalize the answer for not enumerating every retrieved profile.
+- For queries like "give me all" or "list all", it is acceptable for the answer
+  to state the count and highlight the strongest matches, because the full list
+  is visible in the UI.
+
 The synthesis agent receives:
 - the user's original query
 - retrieved LinkedIn profile data
 - connection owner metadata
 
-Judge only the final answer. Use the retrieved profiles as the only source of
-truth. Do not reward facts that are plausible but absent from the profile data.
-Return a structured judgement matching the requested schema.
+Important owner semantics:
+- The owners field is authoritative LinkedIn connection metadata.
+- "Petar's connection" means a profile whose owners list contains "Petar".
+- "not Petar's connection" means the owners list does not contain "Petar".
+- Do not confuse a person's first name with a connection owner.
+  Example: a person named Petar with owners ["Mihajlo"] is NOT Petar's connection.
+- If owners are ["Petar"], it is correct to cite the person as
+  (connection: Petar), and it is correct to say they are not Aleksandar's connection.
+
+Scoring guide:
+- 0.90-1.00: Excellent. Fully satisfies the criterion, with no issue or only
+  trivial wording/style issues.
+- 0.75-0.89: Good. Satisfies the criterion for production use, with minor
+  omissions, mild ambiguity, or small unsupported phrasing that does not change
+  the answer materially.
+- 0.50-0.74: Mixed. Partially satisfies the criterion, but has noticeable issues
+  that reduce reliability or usefulness.
+- 0.25-0.49: Poor. Major issues are present, though some parts are still based
+  on the data.
+- 0.00-0.24: Failing. Mostly incorrect, fabricated, contradictory, or unusable
+  for this criterion.
+
+Use the full range, not just the boundary values.
+Set passed=true when score >= 0.75.
+Set passed=false when score < 0.75.
+
+Judge only the final answer, using the retrieved profiles as the source of truth.
+Do not reward facts that are plausible but absent from the profile data.
 """
 
 GROUNDEDNESS_PROMPT = f"""
@@ -56,11 +89,10 @@ Evaluate whether every factual claim in the answer is supported by the supplied
 profile data. Check claims about names, companies, roles, skills, locations,
 industries, relevance, connection strength, and missing information.
 
-Scoring guide:
-- 1.0: all factual claims are directly supported.
-- 0.7: mostly grounded, with minor vague claims or weakly supported phrasing.
-- 0.4: several unsupported claims, but the answer is still partially based on data.
-- 0.0: answer substantially invents facts or contradicts the profiles.
+Connection owner metadata is authoritative. If a user asks for people who are
+not connected to Petar, and a profile's owners list does not include Petar,
+then the answer may state that the person is not Petar's connection. This is
+grounded in the supplied owner metadata.
 
 Set criterion to "groundedness".
 """
@@ -71,19 +103,25 @@ COMPLETENESS_PROMPT = f"""
 Criterion: completeness.
 
 Evaluate whether the answer satisfies the user's query given the retrieved
-profiles and the synthesis instructions:
-- starts by stating the total number of relevant profiles found
-- gives a strategic recommendation, not a raw profile dump
-- highlights the strongest 2-4 relevant connections when available
-- explains why those connections are strong enough for the user's need
-- explicitly includes a Missing section only when something important was not
-  found or could not be answered from the profiles
+profiles, remembering that the full profile list is shown separately in the UI.
 
-Scoring guide:
-- 1.0: fully answers the query and handles missing information correctly.
-- 0.7: useful answer with a small omission.
-- 0.4: partially answers but misses important requested details.
-- 0.0: does not answer the user's query.
+A complete answer should:
+- state the total number of retrieved/relevant profiles found, if profiles exist
+- give a strategic recommendation, not a raw profile dump
+- highlight the strongest 2-4 relevant connections when available
+- explain briefly why those highlighted connections fit the user's need
+- not be penalized for omitting other retrieved profiles from the prose answer
+- include a Missing section only when an important part of the query cannot be
+  answered from the retrieved profiles and that limitation is not already stated
+  clearly in the answer
+
+For "all", "list all", or "give me all" queries:
+- Do not require the answer to enumerate all profiles.
+- It is enough to state the count and summarize/highlight the best matches,
+  because the full result list is visible in the UI expander.
+  
+Do not require a literal "Missing:" section when the answer clearly states the
+limitation in normal prose.
 
 Set criterion to "completeness".
 """
@@ -104,11 +142,23 @@ Evaluate whether cited people and connection owners are correct:
 
 Do not penalize generic text that does not mention a person.
 
-Scoring guide:
-- 1.0: all citations and owners are exact.
-- 0.7: minor formatting issue, but URLs and owners are recoverable.
-- 0.4: multiple citation/owner mistakes.
-- 0.0: citations or owners are mostly fabricated or missing.
+For owner exclusions, absence from the owners list is valid evidence.
+Example: if owners are ["Aleksandar"] and the user asks for people who are not
+Mihajlo's connections, it is correct to say the person is not Mihajlo's connection.
+
+A citation is correct if:
+- it uses <a href="FULL_LINKEDIN_URL">Displayed Name</a> (connection: Owner)
+- the URL exactly matches a retrieved profile
+- the displayed name refers to that retrieved profile
+- the owner string contains exactly the supplied owners
+
+Do not penalize:
+- accented vs unaccented display if the URL identifies the exact retrieved profile
+- count statements
+- repeated citations of the same person
+- not listing every retrieved profile
+- generic owner-exclusion statements that are supported by owners metadata
+
 
 Set criterion to "citation_owner_accuracy".
 """
@@ -118,19 +168,18 @@ RECOMMENDATION_QUALITY_PROMPT = f"""
 
 Criterion: recommendation_quality.
 
-Evaluate whether the answer is a concise, useful strategic recommendation:
-- prioritizes the strongest people instead of listing everyone
-- gives clear reasons for the recommendation
-- treats multiple owners as a stronger connection when relevant
-- avoids filler, unsupported confidence, and excessive length
-- stays within the requested 3-5 sentence style unless a short Missing section
-  is necessary
+Evaluate whether the answer is a concise, useful strategic recommendation.
 
-Scoring guide:
-- 1.0: concise, actionable, and well-prioritized.
-- 0.7: useful but slightly verbose, generic, or under-prioritized.
-- 0.4: mostly a list or too vague to guide the user.
-- 0.0: unusable recommendation.
+If retrieved profiles are empty:
+- a concise no-results answer should receive 1.0 if it does not invent candidates
+- do not penalize it for not recommending people
+
+For non-empty results, the answer should:
+- prioritize the strongest people instead of listing everyone
+- give clear reasons for the recommendation
+- treat multiple owners as a stronger introduction path when relevant
+- avoid filler, unsupported confidence, and excessive length
+- stay within the requested concise style unless a short Missing section is necessary
 
 Set criterion to "recommendation_quality".
 """
@@ -143,6 +192,9 @@ def context_builder(state: JudgeState) -> str:
     return f"""
 User query:
 {state["query"]}
+
+Number of retrieved profiles:
+{len(state["profiles"])}
 
 Retrieved profiles:
 {state["profiles"]}
@@ -230,6 +282,8 @@ def run_eval():
             answer = output["answer"]
             results.append(judge_answer(query, answer, profiles))
 
+        passed = 0
+        overall_score = 0
         for r in results:
             print(f"Query: {r['query']}")
             print(f"Answer: {r['answer']}")
@@ -242,9 +296,14 @@ def run_eval():
             print(f"Recommendation quality score: {r['recommendation_quality'].score:.2f} ({r['recommendation_quality'].passed})")
             print(f"Recommendation quality reasoning: {r['recommendation_quality'].reasoning}")
             print(f"Overall score: {r['overall_score']}")
+            overall_score += r['overall_score']
             print(f"Passed: {r['passed']}")
+            if r["passed"]:
+                passed += 1
             print()
 
+        print(f"PASSED: = {passed} / {len(results)}")
+        print(f"Overall score: {overall_score} / {len(results)}")
 
 if __name__ == "__main__":
     run_eval()
