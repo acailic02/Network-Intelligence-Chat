@@ -19,6 +19,11 @@ Import LinkedIn connections from multiple team members, ask questions in natural
 - **Grounded responses**: Citations to actual profiles, no hallucinations
 
 ## How to run
+   Open the app on the following [link](network-intelligence-chat-production.up.railway.app). 
+   (might be offline before presentation)
+
+
+## How to run locally
 
 1. **Install dependencies**
 ```bash
